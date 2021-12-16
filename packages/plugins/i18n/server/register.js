@@ -79,6 +79,21 @@ const extendLocalizedContentTypes = strapi => {
     }
   });
 
+  Object.values(strapi.components).forEach(component => {
+    Object.entries(component.attributes).forEach(([id, attr]) => {
+      if (_.get(attr, 'pluginOptions.i18n.multiCulture', false)) {
+        // Add localized attributes on the component
+        _.set(component.attributes, 'tr_' + 'en_' + id, {
+          writable: true,
+          private: false,
+          configurable: false,
+          visible: false,
+          type: attr.type,
+        });
+      }
+    });
+  });
+
   if (strapi.plugin('graphql')) {
     require('./graphql')({ strapi }).register();
   }
