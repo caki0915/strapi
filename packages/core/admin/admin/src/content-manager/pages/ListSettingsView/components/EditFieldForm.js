@@ -1,22 +1,25 @@
 import React from 'react';
+
+import {
+  Button,
+  Flex,
+  Grid,
+  GridItem,
+  ModalBody,
+  ModalFooter,
+  ModalHeader,
+  ModalLayout,
+  TextInput,
+  ToggleInput,
+  Typography,
+} from '@strapi/design-system';
+import upperFirst from 'lodash/upperFirst';
 import PropTypes from 'prop-types';
 import { useIntl } from 'react-intl';
-import upperFirst from 'lodash/upperFirst';
 import styled from 'styled-components';
-import {
-  ModalLayout,
-  ModalHeader,
-  ModalFooter,
-  ModalBody,
-} from '@strapi/design-system/ModalLayout';
-import { Typography } from '@strapi/design-system/Typography';
-import { Button } from '@strapi/design-system/Button';
-import { Flex } from '@strapi/design-system/Flex';
-import { Grid, GridItem } from '@strapi/design-system/Grid';
-import { TextInput } from '@strapi/design-system/TextInput';
-import { ToggleInput } from '@strapi/design-system/ToggleInput';
-import { getTrad } from '../../../utils';
+
 import FieldTypeIcon from '../../../components/FieldTypeIcon';
+import { getTrad } from '../../../utils';
 
 const HeaderContainer = styled(Flex)`
   svg {
@@ -26,7 +29,7 @@ const HeaderContainer = styled(Flex)`
   }
 `;
 
-const EditFieldForm = ({
+export const EditFieldForm = ({
   attributes,
   fieldForm,
   fieldToEdit,
@@ -72,7 +75,7 @@ const EditFieldForm = ({
                   defaultMessage: 'Label',
                 })}
                 name="label"
-                onChange={e => onChangeEditLabel(e)}
+                onChange={(e) => onChangeEditLabel(e)}
                 value={fieldForm.label}
                 hint={formatMessage({
                   id: getTrad('form.Input.label.inputDescription'),
@@ -90,8 +93,9 @@ const EditFieldForm = ({
                     defaultMessage: 'Enable sort on this field',
                   })}
                   name="sortable"
-                  onChange={e =>
-                    onChangeEditLabel({ target: { name: 'sortable', value: e.target.checked } })}
+                  onChange={(e) =>
+                    onChangeEditLabel({ target: { name: 'sortable', value: e.target.checked } })
+                  }
                   onLabel={formatMessage({
                     id: 'app.components.ToggleCheckbox.on-label',
                     defaultMessage: 'on',
@@ -113,7 +117,7 @@ const EditFieldForm = ({
           }
           endActions={
             <Button type="submit">
-              {formatMessage({ id: 'form.button.finish', defaultMessage: 'Finish' })}
+              {formatMessage({ id: 'global.finish', defaultMessage: 'Finish' })}
             </Button>
           }
         />
@@ -138,5 +142,3 @@ EditFieldForm.propTypes = {
   onSubmit: PropTypes.func.isRequired,
   type: PropTypes.string.isRequired,
 };
-
-export default EditFieldForm;

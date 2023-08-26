@@ -1,27 +1,18 @@
 'use strict';
 
-const knex = require('knex');
-
 const { getDialect } = require('./dialects');
 const createSchemaProvider = require('./schema');
 const createMetadata = require('./metadata');
 const { createEntityManager } = require('./entity-manager');
 const { createMigrationsProvider } = require('./migrations');
 const { createLifecyclesProvider } = require('./lifecycles');
+const createConnection = require('./connection');
 const errors = require('./errors');
+const transactionCtx = require('./transaction-context');
 
 // TODO: move back into strapi
 const { transformContentTypes } = require('./utils/content-types');
-
-const createConnection = config => {
-  const knexInstance = knex(config);
-
-  return Object.assign(knexInstance, {
-    getSchemaName() {
-      return this.client.connectionSettings.schema;
-    },
-  });
-};
+const { validateDatabase } = require('./validations');
 
 class Database {
   constructor(config) {
@@ -31,6 +22,8 @@ class Database {
       connection: {},
       settings: {
         forceMigration: true,
+        runMigrations: true,
+        ...config.settings,
       },
       ...config,
     };
@@ -58,6 +51,49 @@ class Database {
     return this.entityManager.getRepository(uid);
   }
 
+  inTransaction() {
+    return !!transactionCtx.get();
+  }
+
+  async transaction(cb) {
+    const notNestedTransaction = !transactionCtx.get();
+    const trx = notNestedTransaction ? await this.connection.transaction() : transactionCtx.get();
+
+    async function commit() {
+      if (notNestedTransaction) {
+        await transactionCtx.commit(trx);
+      }
+    }
+
+    async function rollback() {
+      if (notNestedTransaction) {
+        await transactionCtx.rollback(trx);
+      }
+    }
+
+    if (!cb) {
+      return { commit, rollback, get: () => trx };
+    }
+
+    return transactionCtx.run(trx, async () => {
+      try {
+        const callbackParams = {
+          trx,
+          commit,
+          rollback,
+          onCommit: transactionCtx.onCommit,
+          onRollback: transactionCtx.onRollback,
+        };
+        const res = await cb(callbackParams);
+        await commit();
+        return res;
+      } catch (error) {
+        await rollback();
+        throw error;
+      }
+    });
+  }
+
   getConnection(tableName) {
     const schema = this.connection.getSchemaName();
     const connection = tableName ? this.connection(tableName) : this.connection;
@@ -81,7 +117,11 @@ class Database {
 
 // TODO: move into strapi
 Database.transformContentTypes = transformContentTypes;
-Database.init = async config => new Database(config);
+Database.init = async (config) => {
+  const db = new Database(config);
+  await validateDatabase(db);
+  return db;
+};
 
 module.exports = {
   Database,

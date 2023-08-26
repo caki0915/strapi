@@ -5,10 +5,13 @@
  */
 
 import React from 'react';
+
+import { lightTheme, ThemeProvider } from '@strapi/design-system';
 import { render, waitFor } from '@testing-library/react';
 import { IntlProvider } from 'react-intl';
-import { ThemeProvider, lightTheme } from '@strapi/design-system';
+
 import { SettingsPage } from '../index';
+
 import server from './utils/server';
 
 jest.mock('@strapi/helper-plugin', () => ({
@@ -61,6 +64,102 @@ describe('Upload | SettingsPage', () => {
         width: 1px;
       }
 
+      .c6 {
+        font-weight: 600;
+        font-size: 2rem;
+        line-height: 1.25;
+        color: #32324d;
+      }
+
+      .c11 {
+        font-size: 0.75rem;
+        line-height: 1.33;
+        font-weight: 600;
+        color: #ffffff;
+      }
+
+      .c12 {
+        font-size: 1rem;
+        line-height: 1.5;
+        color: #666687;
+      }
+
+      .c20 {
+        font-weight: 500;
+        font-size: 1rem;
+        line-height: 1.25;
+        color: #32324d;
+      }
+
+      .c25 {
+        font-size: 0.75rem;
+        line-height: 1.33;
+        font-weight: 600;
+        color: #32324d;
+      }
+
+      .c33 {
+        font-size: 0.75rem;
+        line-height: 1.33;
+        font-weight: 600;
+        color: #666687;
+        text-transform: uppercase;
+      }
+
+      .c35 {
+        font-size: 0.75rem;
+        line-height: 1.33;
+        font-weight: 600;
+        color: #4945ff;
+        text-transform: uppercase;
+      }
+
+      .c37 {
+        font-size: 0.75rem;
+        line-height: 1.33;
+        color: #666687;
+      }
+
+      .c39 {
+        font-size: 0.75rem;
+        line-height: 1.33;
+        font-weight: 600;
+        color: #b72b1a;
+        text-transform: uppercase;
+      }
+
+      .c1 {
+        background: #f6f6f9;
+        padding-top: 40px;
+        padding-right: 56px;
+        padding-bottom: 40px;
+        padding-left: 56px;
+      }
+
+      .c3 {
+        min-width: 0;
+      }
+
+      .c7 {
+        background: #4945ff;
+        padding: 8px;
+        padding-right: 16px;
+        padding-left: 16px;
+        border-radius: 4px;
+        border-color: #4945ff;
+        border: 1px solid #4945ff;
+        cursor: pointer;
+      }
+
+      .c13 {
+        padding-right: 56px;
+        padding-left: 56px;
+      }
+
+      .c15 {
+        padding-bottom: 56px;
+      }
+
       .c18 {
         background: #ffffff;
         padding: 24px;
@@ -68,46 +167,220 @@ describe('Upload | SettingsPage', () => {
         box-shadow: 0px 1px 4px rgba(33,33,52,0.1);
       }
 
-      .c11 {
-        font-weight: 600;
-        color: #32324d;
-        font-size: 0.875rem;
-        line-height: 1.43;
+      .c23 {
+        max-width: 320px;
       }
 
-      .c8 {
-        padding-right: 8px;
+      .c27 {
+        background: #f6f6f9;
+        padding: 4px;
+        border-radius: 4px;
+        border-style: solid;
+        border-width: 1px;
+        border-color: #dcdce4;
+        position: relative;
+        cursor: pointer;
       }
 
-      .c5 {
+      .c30 {
+        background: transparent;
+        padding-top: 8px;
+        padding-right: 12px;
+        padding-bottom: 8px;
+        padding-left: 12px;
+        border-radius: 4px;
+        border-color: #f6f6f9;
+        border: 1px solid #f6f6f9;
+        -webkit-flex: 1 1 50%;
+        -ms-flex: 1 1 50%;
+        flex: 1 1 50%;
+      }
+
+      .c34 {
+        background: #ffffff;
+        padding-right: 12px;
+        padding-left: 12px;
+        border-radius: 4px;
+        border-color: #dcdce4;
+        border: 1px solid #dcdce4;
+        -webkit-flex: 1 1 50%;
+        -ms-flex: 1 1 50%;
+        flex: 1 1 50%;
+      }
+
+      .c38 {
+        background: #ffffff;
+        padding-top: 8px;
+        padding-right: 12px;
+        padding-bottom: 8px;
+        padding-left: 12px;
+        border-radius: 4px;
+        border-color: #dcdce4;
+        border: 1px solid #dcdce4;
+        -webkit-flex: 1 1 50%;
+        -ms-flex: 1 1 50%;
+        flex: 1 1 50%;
+      }
+
+      .c40 {
+        background: transparent;
+        padding-right: 12px;
+        padding-left: 12px;
+        border-radius: 4px;
+        border-color: #f6f6f9;
+        border: 1px solid #f6f6f9;
+        -webkit-flex: 1 1 50%;
+        -ms-flex: 1 1 50%;
+        flex: 1 1 50%;
+      }
+
+      .c2 {
+        -webkit-align-items: center;
+        -webkit-box-align: center;
+        -ms-flex-align: center;
+        align-items: center;
         display: -webkit-box;
         display: -webkit-flex;
         display: -ms-flexbox;
         display: flex;
-        cursor: pointer;
-        padding: 8px;
-        border-radius: 4px;
-        background: #ffffff;
-        border: 1px solid #dcdce4;
+        -webkit-flex-direction: row;
+        -ms-flex-direction: row;
+        flex-direction: row;
+        -webkit-box-pack: justify;
+        -webkit-justify-content: space-between;
+        -ms-flex-pack: justify;
+        justify-content: space-between;
+      }
+
+      .c4 {
+        -webkit-align-items: center;
+        -webkit-box-align: center;
+        -ms-flex-align: center;
+        align-items: center;
+        display: -webkit-box;
+        display: -webkit-flex;
+        display: -ms-flexbox;
+        display: flex;
+        -webkit-flex-direction: row;
+        -ms-flex-direction: row;
+        flex-direction: row;
+      }
+
+      .c8 {
+        -webkit-align-items: center;
+        -webkit-box-align: center;
+        -ms-flex-align: center;
+        align-items: center;
+        display: -webkit-box;
+        display: -webkit-flex;
+        display: -ms-flexbox;
+        display: flex;
+        -webkit-flex-direction: row;
+        -ms-flex-direction: row;
+        flex-direction: row;
+        gap: 8px;
+      }
+
+      .c17 {
+        -webkit-align-items: stretch;
+        -webkit-box-align: stretch;
+        -ms-flex-align: stretch;
+        align-items: stretch;
+        display: -webkit-box;
+        display: -webkit-flex;
+        display: -ms-flexbox;
+        display: flex;
+        -webkit-flex-direction: column;
+        -ms-flex-direction: column;
+        flex-direction: column;
+        gap: 12;
+      }
+
+      .c19 {
+        -webkit-align-items: stretch;
+        -webkit-box-align: stretch;
+        -ms-flex-align: stretch;
+        align-items: stretch;
+        display: -webkit-box;
+        display: -webkit-flex;
+        display: -ms-flexbox;
+        display: flex;
+        -webkit-flex-direction: column;
+        -ms-flex-direction: column;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .c24 {
+        -webkit-align-items: stretch;
+        -webkit-box-align: stretch;
+        -ms-flex-align: stretch;
+        align-items: stretch;
+        display: -webkit-box;
+        display: -webkit-flex;
+        display: -ms-flexbox;
+        display: flex;
+        -webkit-flex-direction: column;
+        -ms-flex-direction: column;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .c28 {
+        -webkit-align-items: center;
+        -webkit-box-align: center;
+        -ms-flex-align: center;
+        align-items: center;
+        display: -webkit-box;
+        display: -webkit-flex;
+        display: -ms-flexbox;
+        display: flex;
+        -webkit-flex-direction: row;
+        -ms-flex-direction: row;
+        flex-direction: row;
+        -webkit-flex-wrap: wrap;
+        -ms-flex-wrap: wrap;
+        flex-wrap: wrap;
+      }
+
+      .c31 {
+        -webkit-align-items: center;
+        -webkit-box-align: center;
+        -ms-flex-align: center;
+        align-items: center;
+        display: -webkit-box;
+        display: -webkit-flex;
+        display: -ms-flexbox;
+        display: flex;
+        -webkit-flex-direction: row;
+        -ms-flex-direction: row;
+        flex-direction: row;
+        -webkit-box-pack: center;
+        -webkit-justify-content: center;
+        -ms-flex-pack: center;
+        justify-content: center;
+      }
+
+      .c9 {
         position: relative;
         outline: none;
       }
 
-      .c5 svg {
+      .c9 > svg {
         height: 12px;
         width: 12px;
       }
 
-      .c5 svg > g,
-      .c5 svg path {
+      .c9 > svg > g,
+      .c9 > svg path {
         fill: #ffffff;
       }
 
-      .c5[aria-disabled='true'] {
+      .c9[aria-disabled='true'] {
         pointer-events: none;
       }
 
-      .c5:after {
+      .c9:after {
         -webkit-transition-property: all;
         transition-property: all;
         -webkit-transition-duration: 0.2s;
@@ -122,11 +395,11 @@ describe('Upload | SettingsPage', () => {
         border: 2px solid transparent;
       }
 
-      .c5:focus-visible {
+      .c9:focus-visible {
         outline: none;
       }
 
-      .c5:focus-visible:after {
+      .c9:focus-visible:after {
         border-radius: 8px;
         content: '';
         position: absolute;
@@ -137,171 +410,54 @@ describe('Upload | SettingsPage', () => {
         border: 2px solid #4945ff;
       }
 
-      .c9 {
-        height: 100%;
+      .c10 {
+        height: 2rem;
       }
 
-      .c6 {
-        -webkit-align-items: center;
-        -webkit-box-align: center;
-        -ms-flex-align: center;
-        align-items: center;
-        padding: 10px 16px;
-        background: #4945ff;
-        border: none;
-        border: 1px solid #4945ff;
-        background: #4945ff;
+      .c10 svg {
+        height: 0.75rem;
+        width: auto;
       }
 
-      .c6 .c7 {
-        display: -webkit-box;
-        display: -webkit-flex;
-        display: -ms-flexbox;
-        display: flex;
-        -webkit-align-items: center;
-        -webkit-box-align: center;
-        -ms-flex-align: center;
-        align-items: center;
-      }
-
-      .c6 .c10 {
-        color: #ffffff;
-      }
-
-      .c6[aria-disabled='true'] {
+      .c10[aria-disabled='true'] {
         border: 1px solid #dcdce4;
         background: #eaeaef;
       }
 
-      .c6[aria-disabled='true'] .c10 {
+      .c10[aria-disabled='true'] .c5 {
         color: #666687;
       }
 
-      .c6[aria-disabled='true'] svg > g,
-      .c6[aria-disabled='true'] svg path {
+      .c10[aria-disabled='true'] svg > g,.c10[aria-disabled='true'] svg path {
         fill: #666687;
       }
 
-      .c6[aria-disabled='true']:active {
+      .c10[aria-disabled='true']:active {
         border: 1px solid #dcdce4;
         background: #eaeaef;
       }
 
-      .c6[aria-disabled='true']:active .c10 {
+      .c10[aria-disabled='true']:active .c5 {
         color: #666687;
       }
 
-      .c6[aria-disabled='true']:active svg > g,
-      .c6[aria-disabled='true']:active svg path {
+      .c10[aria-disabled='true']:active svg > g,.c10[aria-disabled='true']:active svg path {
         fill: #666687;
       }
 
-      .c6:hover {
+      .c10:hover {
         border: 1px solid #7b79ff;
         background: #7b79ff;
       }
 
-      .c6:active {
+      .c10:active {
         border: 1px solid #4945ff;
         background: #4945ff;
       }
 
-      .c20 {
-        display: -webkit-box;
-        display: -webkit-flex;
-        display: -ms-flexbox;
-        display: flex;
-        -webkit-flex-direction: row;
-        -ms-flex-direction: row;
-        flex-direction: row;
-        -webkit-align-items: center;
-        -webkit-box-align: center;
-        -ms-flex-align: center;
-        align-items: center;
-      }
-
-      .c17 {
-        display: -webkit-box;
-        display: -webkit-flex;
-        display: -ms-flexbox;
-        display: flex;
-        -webkit-flex-direction: column;
-        -ms-flex-direction: column;
-        flex-direction: column;
-      }
-
-      .c17 > * {
-        margin-top: 0;
-        margin-bottom: 0;
-      }
-
-      .c19 {
-        display: -webkit-box;
-        display: -webkit-flex;
-        display: -ms-flexbox;
-        display: flex;
-        -webkit-flex-direction: column;
-        -ms-flex-direction: column;
-        flex-direction: column;
-      }
-
-      .c19 > * {
-        margin-top: 0;
-        margin-bottom: 0;
-      }
-
-      .c19 > * + * {
-        margin-top: 16px;
-      }
-
-      .c27 {
-        font-weight: 600;
-        color: #32324d;
-        font-size: 0.75rem;
-        line-height: 1.33;
-      }
-
-      .c36 {
-        font-weight: 600;
-        color: #271fe0;
-        font-size: 0.75rem;
-        line-height: 1.33;
-      }
-
-      .c38 {
-        color: #666687;
-        font-size: 0.75rem;
-        line-height: 1.33;
-      }
-
-      .c40 {
-        font-weight: 600;
-        color: #b72b1a;
-        font-size: 0.75rem;
-        line-height: 1.33;
-      }
-
-      .c30 {
-        background: #ffffff;
-        border-radius: 4px;
-      }
-
-      .c32 {
-        background: #ffffff;
-        padding-right: 32px;
-        padding-left: 32px;
-      }
-
-      .c34 {
-        background: #f0f0ff;
-        padding-right: 32px;
-        padding-left: 32px;
-      }
-
-      .c39 {
-        background: #fcecea;
-        padding-right: 32px;
-        padding-left: 32px;
+      .c10 svg > g,
+      .c10 svg path {
+        fill: #ffffff;
       }
 
       .c26 {
@@ -309,134 +465,21 @@ describe('Upload | SettingsPage', () => {
         display: -webkit-flex;
         display: -ms-flexbox;
         display: flex;
-        -webkit-flex-direction: row;
-        -ms-flex-direction: row;
-        flex-direction: row;
         -webkit-align-items: center;
         -webkit-box-align: center;
         -ms-flex-align: center;
         align-items: center;
       }
 
-      .c25 {
-        display: -webkit-box;
-        display: -webkit-flex;
-        display: -ms-flexbox;
-        display: flex;
-        -webkit-flex-direction: column;
-        -ms-flex-direction: column;
-        flex-direction: column;
-      }
-
-      .c25 > * {
-        margin-top: 0;
-        margin-bottom: 0;
-      }
-
-      .c25 > * + * {
-        margin-top: 4px;
-      }
-
-      .c29 {
-        border: 0;
-        -webkit-clip: rect(0 0 0 0);
-        clip: rect(0 0 0 0);
-        height: 1px;
-        margin: -1px;
-        overflow: hidden;
-        padding: 0;
-        position: absolute;
-        width: 1px;
-      }
-
-      .c28 {
-        position: relative;
-        display: inline-block;
-      }
-
-      .c31 {
-        height: 2.5rem;
-        border: 1px solid #dcdce4;
-        display: -webkit-inline-box;
-        display: -webkit-inline-flex;
-        display: -ms-inline-flexbox;
-        display: inline-flex;
-        overflow: hidden;
-        outline: none;
-        box-shadow: 0;
-        -webkit-transition-property: border-color,box-shadow,fill;
-        transition-property: border-color,box-shadow,fill;
-        -webkit-transition-duration: 0.2s;
-        transition-duration: 0.2s;
-      }
-
-      .c31:focus-within {
-        border: 1px solid #4945ff;
-        box-shadow: #4945ff 0px 0px 0px 2px;
-      }
-
-      .c35 {
-        text-transform: uppercase;
-        position: relative;
-        z-index: 2;
-      }
-
-      .c33 {
-        text-transform: uppercase;
-        border-right: 1px solid #dcdce4;
-        position: relative;
-        z-index: 2;
-      }
-
-      .c37 {
-        position: absolute;
-        z-index: 1;
-        left: 4px;
-        top: 4px;
-      }
-
-      .c24 {
-        width: -webkit-fit-content;
-        width: -moz-fit-content;
-        width: fit-content;
-      }
-
       .c21 {
-        color: #32324d;
-        font-weight: 500;
-        font-size: 1rem;
-        line-height: 1.25;
-      }
-
-      .c0:focus-visible {
-        outline: none;
-      }
-
-      .c22 {
         display: grid;
         grid-template-columns: repeat(12,1fr);
         gap: 24px;
       }
 
-      .c23 {
+      .c22 {
         grid-column: span 6;
-      }
-
-      .c1 {
-        background: #f6f6f9;
-        padding-top: 40px;
-        padding-right: 56px;
-        padding-bottom: 40px;
-        padding-left: 56px;
-      }
-
-      .c13 {
-        padding-right: 56px;
-        padding-left: 56px;
-      }
-
-      .c15 {
-        padding-bottom: 56px;
+        max-width: 100%;
       }
 
       .c14 {
@@ -448,59 +491,47 @@ describe('Upload | SettingsPage', () => {
         overflow-x: hidden;
       }
 
-      .c2 {
-        display: -webkit-box;
-        display: -webkit-flex;
-        display: -ms-flexbox;
-        display: flex;
-        -webkit-flex-direction: row;
-        -ms-flex-direction: row;
-        flex-direction: row;
-        -webkit-box-pack: justify;
-        -webkit-justify-content: space-between;
-        -ms-flex-pack: justify;
-        justify-content: space-between;
-        -webkit-align-items: center;
-        -webkit-box-align: center;
-        -ms-flex-align: center;
-        align-items: center;
+      .c0:focus-visible {
+        outline: none;
       }
 
-      .c3 {
-        display: -webkit-box;
-        display: -webkit-flex;
-        display: -ms-flexbox;
-        display: flex;
-        -webkit-flex-direction: row;
-        -ms-flex-direction: row;
-        flex-direction: row;
-        -webkit-align-items: center;
-        -webkit-box-align: center;
-        -ms-flex-align: center;
-        align-items: center;
+      .c29 {
+        outline: none;
+        box-shadow: 0;
+        -webkit-transition-property: border-color,box-shadow,fill;
+        transition-property: border-color,box-shadow,fill;
+        -webkit-transition-duration: 0.2s;
+        transition-duration: 0.2s;
       }
 
-      .c4 {
-        color: #32324d;
-        font-weight: 600;
-        font-size: 2rem;
-        line-height: 1.25;
+      .c29:focus-within {
+        border: 1px solid #4945ff;
+        box-shadow: #4945ff 0px 0px 0px 2px;
       }
 
-      .c12 {
-        color: #666687;
-        font-size: 1rem;
-        line-height: 1.5;
+      .c32 {
+        padding-top: 6px;
+        padding-bottom: 6px;
+      }
+
+      .c36 {
+        height: 100%;
+        left: 0;
+        opacity: 0;
+        position: absolute;
+        top: 0;
+        z-index: 0;
+        width: 100%;
       }
 
       @media (max-width:68.75rem) {
-        .c23 {
+        .c22 {
           grid-column: span 12;
         }
       }
 
       @media (max-width:34.375rem) {
-        .c23 {
+        .c22 {
           grid-column: span;
         }
       }
@@ -524,47 +555,47 @@ describe('Upload | SettingsPage', () => {
                   class="c2"
                 >
                   <div
-                    class="c3"
+                    class="c3 c4"
                   >
                     <h1
-                      class="c4"
+                      class="c5 c6"
                     >
                       Media Library
                     </h1>
                   </div>
                   <button
                     aria-disabled="true"
-                    class="c5 c6"
+                    class="c7 c8 c9 c10"
                     data-testid="save-button"
                     disabled=""
                     type="submit"
                   >
                     <div
                       aria-hidden="true"
-                      class="c7 c8 c9"
+                      class=""
                     >
                       <svg
                         fill="none"
-                        height="1em"
+                        height="1rem"
                         viewBox="0 0 24 24"
-                        width="1em"
+                        width="1rem"
                         xmlns="http://www.w3.org/2000/svg"
                       >
                         <path
-                          d="M20.727 2.97a.2.2 0 01.286 0l2.85 2.89a.2.2 0 010 .28L9.554 20.854a.2.2 0 01-.285 0l-9.13-9.243a.2.2 0 010-.281l2.85-2.892a.2.2 0 01.284 0l6.14 6.209L20.726 2.97z"
+                          d="M20.727 2.97a.2.2 0 0 1 .286 0l2.85 2.89a.2.2 0 0 1 0 .28L9.554 20.854a.2.2 0 0 1-.285 0l-9.13-9.243a.2.2 0 0 1 0-.281l2.85-2.892a.2.2 0 0 1 .284 0l6.14 6.209L20.726 2.97Z"
                           fill="#212134"
                         />
                       </svg>
                     </div>
                     <span
-                      class="c10 c11"
+                      class="c5 c11"
                     >
                       Save
                     </span>
                   </button>
                 </div>
                 <p
-                  class="c12"
+                  class="c5 c12"
                 >
                   Configure the settings for the Media Library
                 </p>
@@ -589,235 +620,202 @@ describe('Upload | SettingsPage', () => {
                         class="c19"
                       >
                         <div
-                          class="c20"
+                          class="c4"
                         >
                           <h2
-                            class="c21"
+                            class="c5 c20"
                           >
                             Asset management
                           </h2>
                         </div>
                         <div
-                          class="c22"
+                          class="c21"
                         >
                           <div
-                            class="c23"
+                            class="c22"
                           >
                             <div
-                              class=""
+                              class="c23"
                             >
                               <div
                                 class="c24"
                               >
                                 <div
-                                  class="c25"
+                                  class="c4"
+                                >
+                                  <label
+                                    class="c5 c25 c26"
+                                    for=":r0:"
+                                  >
+                                    Responsive friendly upload
+                                  </label>
+                                </div>
+                                <div
+                                  class="c27 c28 c29"
+                                  wrap="wrap"
                                 >
                                   <div
-                                    class="c26"
+                                    class="c30 c31 c32"
                                   >
-                                    <label
-                                      class="c27"
-                                      for="field-1"
+                                    <span
+                                      class="c5 c33"
                                     >
-                                      Responsive friendly upload
-                                    </label>
+                                      Off
+                                    </span>
                                   </div>
-                                  <label
-                                    class="c28"
+                                  <div
+                                    class="c34 c31 c32"
                                   >
-                                    <div
-                                      class="c29"
+                                    <span
+                                      class="c5 c35"
                                     >
-                                      Responsive friendly upload
-                                    </div>
-                                    <div
-                                      class="c30 c31"
-                                    >
-                                      <div
-                                        aria-hidden="true"
-                                        class="c32 c26 c33"
-                                      >
-                                        <span
-                                          class="c27"
-                                        >
-                                          Off
-                                        </span>
-                                      </div>
-                                      <div
-                                        aria-hidden="true"
-                                        class="c34 c26 c35"
-                                      >
-                                        <span
-                                          class="c36"
-                                        >
-                                          On
-                                        </span>
-                                      </div>
-                                      <input
-                                        aria-disabled="false"
-                                        aria-label="responsiveDimensions"
-                                        checked=""
-                                        class="c37"
-                                        data-testid="responsiveDimensions"
-                                        name="responsiveDimensions"
-                                        type="checkbox"
-                                      />
-                                    </div>
-                                  </label>
-                                  <p
-                                    class="c38"
-                                    id="field-1-hint"
-                                  >
-                                    Enabling this option will generate multiple formats (small, medium and large) of the uploaded asset.
-                                  </p>
+                                      On
+                                    </span>
+                                  </div>
+                                  <input
+                                    aria-describedby=":r0:-hint :r0:-error"
+                                    aria-disabled="false"
+                                    aria-label="responsiveDimensions"
+                                    aria-required="false"
+                                    checked=""
+                                    class="c36"
+                                    data-testid="responsiveDimensions"
+                                    id=":r0:"
+                                    name="responsiveDimensions"
+                                    type="checkbox"
+                                  />
                                 </div>
+                                <p
+                                  class="c5 c37"
+                                  id=":r0:-hint"
+                                >
+                                  Enabling this option will generate multiple formats (small, medium and large) of the uploaded asset.
+                                </p>
                               </div>
                             </div>
                           </div>
                           <div
-                            class="c23"
+                            class="c22"
                           >
                             <div
-                              class=""
+                              class="c23"
                             >
                               <div
                                 class="c24"
                               >
                                 <div
-                                  class="c25"
+                                  class="c4"
+                                >
+                                  <label
+                                    class="c5 c25 c26"
+                                    for=":r2:"
+                                  >
+                                    Size optimization
+                                  </label>
+                                </div>
+                                <div
+                                  class="c27 c28 c29"
+                                  wrap="wrap"
                                 >
                                   <div
-                                    class="c26"
+                                    class="c38 c31 c32"
                                   >
-                                    <label
-                                      class="c27"
-                                      for="field-2"
+                                    <span
+                                      class="c5 c39"
                                     >
-                                      Size optimization
-                                    </label>
+                                      Off
+                                    </span>
                                   </div>
-                                  <label
-                                    class="c28"
+                                  <div
+                                    class="c40 c31 c32"
                                   >
-                                    <div
-                                      class="c29"
+                                    <span
+                                      class="c5 c33"
                                     >
-                                      Size optimization
-                                    </div>
-                                    <div
-                                      class="c30 c31"
-                                    >
-                                      <div
-                                        aria-hidden="true"
-                                        class="c39 c26 c33"
-                                      >
-                                        <span
-                                          class="c40"
-                                        >
-                                          Off
-                                        </span>
-                                      </div>
-                                      <div
-                                        aria-hidden="true"
-                                        class="c32 c26 c35"
-                                      >
-                                        <span
-                                          class="c27"
-                                        >
-                                          On
-                                        </span>
-                                      </div>
-                                      <input
-                                        aria-disabled="false"
-                                        aria-label="sizeOptimization"
-                                        class="c37"
-                                        data-testid="sizeOptimization"
-                                        name="sizeOptimization"
-                                        type="checkbox"
-                                      />
-                                    </div>
-                                  </label>
-                                  <p
-                                    class="c38"
-                                    id="field-2-hint"
-                                  >
-                                    Enabling this option will optimize the file size without compromising on the quality.
-                                  </p>
+                                      On
+                                    </span>
+                                  </div>
+                                  <input
+                                    aria-describedby=":r2:-hint :r2:-error"
+                                    aria-disabled="false"
+                                    aria-label="sizeOptimization"
+                                    aria-required="false"
+                                    class="c36"
+                                    data-testid="sizeOptimization"
+                                    id=":r2:"
+                                    name="sizeOptimization"
+                                    type="checkbox"
+                                  />
                                 </div>
+                                <p
+                                  class="c5 c37"
+                                  id=":r2:-hint"
+                                >
+                                  Enabling this option will reduce the image size and slightly reduce its quality.
+                                </p>
                               </div>
                             </div>
                           </div>
                           <div
-                            class="c23"
+                            class="c22"
                           >
                             <div
-                              class=""
+                              class="c23"
                             >
                               <div
                                 class="c24"
                               >
                                 <div
-                                  class="c25"
+                                  class="c4"
+                                >
+                                  <label
+                                    class="c5 c25 c26"
+                                    for=":r4:"
+                                  >
+                                    Auto orientation
+                                  </label>
+                                </div>
+                                <div
+                                  class="c27 c28 c29"
+                                  wrap="wrap"
                                 >
                                   <div
-                                    class="c26"
+                                    class="c30 c31 c32"
                                   >
-                                    <label
-                                      class="c27"
-                                      for="field-3"
+                                    <span
+                                      class="c5 c33"
                                     >
-                                      Auto orientation
-                                    </label>
+                                      Off
+                                    </span>
                                   </div>
-                                  <label
-                                    class="c28"
+                                  <div
+                                    class="c34 c31 c32"
                                   >
-                                    <div
-                                      class="c29"
+                                    <span
+                                      class="c5 c35"
                                     >
-                                      Auto orientation
-                                    </div>
-                                    <div
-                                      class="c30 c31"
-                                    >
-                                      <div
-                                        aria-hidden="true"
-                                        class="c32 c26 c33"
-                                      >
-                                        <span
-                                          class="c27"
-                                        >
-                                          Off
-                                        </span>
-                                      </div>
-                                      <div
-                                        aria-hidden="true"
-                                        class="c34 c26 c35"
-                                      >
-                                        <span
-                                          class="c36"
-                                        >
-                                          On
-                                        </span>
-                                      </div>
-                                      <input
-                                        aria-disabled="false"
-                                        aria-label="autoOrientation"
-                                        checked=""
-                                        class="c37"
-                                        data-testid="autoOrientation"
-                                        name="autoOrientation"
-                                        type="checkbox"
-                                      />
-                                    </div>
-                                  </label>
-                                  <p
-                                    class="c38"
-                                    id="field-3-hint"
-                                  >
-                                    Enabling this option will automatically rotate the image according to EXIF orientation tag.
-                                  </p>
+                                      On
+                                    </span>
+                                  </div>
+                                  <input
+                                    aria-describedby=":r4:-hint :r4:-error"
+                                    aria-disabled="false"
+                                    aria-label="autoOrientation"
+                                    aria-required="false"
+                                    checked=""
+                                    class="c36"
+                                    data-testid="autoOrientation"
+                                    id=":r4:"
+                                    name="autoOrientation"
+                                    type="checkbox"
+                                  />
                                 </div>
+                                <p
+                                  class="c5 c37"
+                                  id=":r4:-hint"
+                                >
+                                  Enabling this option will automatically rotate the image according to EXIF orientation tag.
+                                </p>
                               </div>
                             </div>
                           </div>

@@ -1,12 +1,13 @@
 import React from 'react';
+
+import { Box, Flex } from '@strapi/design-system';
+import { File, FilePdf } from '@strapi/icons';
 import styled from 'styled-components';
-import FileIcon from '@strapi/icons/File';
-import FilePdfIcon from '@strapi/icons/FilePdf';
-import { Box } from '@strapi/design-system/Box';
-import { Flex } from '@strapi/design-system/Flex';
-import { AssetType, AssetDefinition } from '../../../constants';
+
+import { AssetDefinition, AssetType } from '../../../constants';
+import { createAssetUrl } from '../../../utils';
+import { AudioPreview } from '../../AssetCard/AudioPreview';
 import { VideoPreview } from '../../AssetCard/VideoPreview';
-import { createAssetUrl } from '../../../utils/createAssetUrl';
 
 const DocAsset = styled(Flex)`
   background: linear-gradient(180deg, #ffffff 0%, #f6f6f9 121.48%);
@@ -20,6 +21,13 @@ const VideoPreviewWrapper = styled(Box)`
   }
 `;
 
+const AudioPreviewWrapper = styled(Box)`
+  canvas,
+  audio {
+    max-width: 100%;
+  }
+`;
+
 export const CarouselAsset = ({ asset }) => {
   if (asset.mime.includes(AssetType.Video)) {
     return (
@@ -30,6 +38,14 @@ export const CarouselAsset = ({ asset }) => {
           alt={asset.alternativeText || asset.name}
         />
       </VideoPreviewWrapper>
+    );
+  }
+
+  if (asset.mime.includes(AssetType.Audio)) {
+    return (
+      <AudioPreviewWrapper>
+        <AudioPreview url={createAssetUrl(asset, true)} alt={asset.alternativeText || asset.name} />
+      </AudioPreviewWrapper>
     );
   }
 
@@ -48,9 +64,9 @@ export const CarouselAsset = ({ asset }) => {
   return (
     <DocAsset width="100%" height="100%" justifyContent="center" hasRadius>
       {asset.ext.includes('pdf') ? (
-        <FilePdfIcon aria-label={asset.alternativeText || asset.name} width="24px" height="32px" />
+        <FilePdf aria-label={asset.alternativeText || asset.name} width="24px" height="32px" />
       ) : (
-        <FileIcon aria-label={asset.alternativeText || asset.name} width="24px" height="32px" />
+        <File aria-label={asset.alternativeText || asset.name} width="24px" height="32px" />
       )}
     </DocAsset>
   );

@@ -4,18 +4,19 @@
  *
  */
 
+import React from 'react';
+
+import { lightTheme, ThemeProvider } from '@strapi/design-system';
 import { render } from '@testing-library/react';
 import { createMemoryHistory } from 'history';
-import React from 'react';
+import { IntlProvider } from 'react-intl';
 import { Router } from 'react-router-dom';
-import LanguageProvider from '../../../../../../admin/admin/src/components/LanguageProvider';
-import Theme from '../../../../../../admin/admin/src/components/Theme';
-import en from '../../../../../../admin/admin/src/translations/en.json';
+
 import FormModalNavigationProvider from '../../../components/FormModalNavigationProvider';
 import pluginEn from '../../../translations/en.json';
 import getTrad from '../../../utils/getTrad';
-
 import ListView from '../index';
+
 import mockData from './mockData';
 
 jest.mock('../../../hooks/useDataManager', () => {
@@ -24,8 +25,8 @@ jest.mock('../../../hooks/useDataManager', () => {
     modifiedData: mockData,
     isInDevelopmentMode: true,
     isInContentTypeView: true,
-    submitData: () => {},
-    toggleModalCancel: () => {},
+    submitData() {},
+    toggleModalCancel() {},
   }));
 });
 
@@ -38,28 +39,23 @@ jest.mock('@strapi/helper-plugin', () => ({
 const makeApp = () => {
   const history = createMemoryHistory();
   const messages = {
-    en: Object.keys(pluginEn).reduce(
-      (acc, current) => {
-        acc[getTrad(current)] = pluginEn[current];
+    en: Object.keys(pluginEn).reduce((acc, current) => {
+      acc[getTrad(current)] = pluginEn[current];
 
-        return acc;
-      },
-      { ...en }
-    ),
+      return acc;
+    }, {}),
   };
 
-  const localeNames = { en: 'English' };
-
   return (
-    <LanguageProvider messages={messages} localeNames={localeNames}>
-      <Theme>
+    <IntlProvider messages={messages} defaultLocale="en" textComponent="span" locale="en">
+      <ThemeProvider theme={lightTheme}>
         <Router history={history}>
           <FormModalNavigationProvider>
             <ListView />
           </FormModalNavigationProvider>
         </Router>
-      </Theme>
-    </LanguageProvider>
+      </ThemeProvider>
+    </IntlProvider>
   );
 };
 

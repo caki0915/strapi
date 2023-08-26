@@ -5,16 +5,19 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { ThemeProvider, lightTheme } from '@strapi/design-system';
+
+import { lightTheme, ThemeProvider } from '@strapi/design-system';
+import { NotificationsProvider, TrackingProvider } from '@strapi/helper-plugin';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { IntlProvider } from 'react-intl';
 import { QueryClient, QueryClientProvider } from 'react-query';
-import { NotificationsProvider } from '@strapi/helper-plugin';
-import { EditAssetDialog } from '../index';
+
 import en from '../../../translations/en.json';
 import { downloadFile } from '../../../utils/downloadFile';
+import { EditAssetDialog } from '../index';
 
 jest.mock('../../../utils/downloadFile');
+jest.mock('../../../hooks/useFolderStructure');
 
 const messageForPlugin = Object.keys(en).reduce((acc, curr) => {
   acc[curr] = `upload.${en[curr]}`;
@@ -95,18 +98,26 @@ const queryClient = new QueryClient({
   },
 });
 
-const renderCompo = (toggleNotification = jest.fn()) =>
+const renderCompo = () =>
   render(
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider theme={lightTheme}>
-        <NotificationsProvider toggleNotification={toggleNotification}>
+      <TrackingProvider>
+        <ThemeProvider theme={lightTheme}>
           <IntlProvider locale="en" messages={messageForPlugin} defaultLocale="en">
-            <EditAssetDialog asset={asset} onClose={jest.fn()} canUpdate canCopyLink canDownload />
+            <NotificationsProvider>
+              <EditAssetDialog
+                asset={asset}
+                onClose={jest.fn()}
+                canUpdate
+                canCopyLink
+                canDownload
+              />
+            </NotificationsProvider>
           </IntlProvider>
-        </NotificationsProvider>
-      </ThemeProvider>
+        </ThemeProvider>
+      </TrackingProvider>
     </QueryClientProvider>,
-    { container: document.body }
+    { container: document.getElementById('app') }
   );
 
 describe('<EditAssetDialog />', () => {
@@ -121,9 +132,9 @@ describe('<EditAssetDialog />', () => {
   });
 
   it('renders and matches the snapshot', () => {
-    const { container } = renderCompo();
+    renderCompo();
 
-    expect(container).toMatchSnapshot();
+    expect(document.body).toMatchSnapshot();
   });
 
   describe('PreviewBox', () => {
@@ -136,19 +147,14 @@ describe('<EditAssetDialog />', () => {
       expect(screen.getByText('Are you sure you want to delete this?')).toBeVisible();
     });
 
-    it('copies the link and shows a notification when pressing "Copy link"', () => {
-      const toggleNotificationSpy = jest.fn();
-      renderCompo(toggleNotificationSpy);
+    it('copies the link and shows a notification when pressing "Copy link"', async () => {
+      renderCompo();
 
       fireEvent.click(screen.getByLabelText('Copy link'));
 
-      expect(toggleNotificationSpy).toHaveBeenCalledWith({
-        message: {
-          defaultMessage: 'Link copied into the clipboard',
-          id: 'notification.link-copied',
-        },
-        type: 'success',
-      });
+      await waitFor(() =>
+        expect(screen.getByText('Link copied into the clipboard')).toBeInTheDocument()
+      );
     });
 
     it('downloads the file when pressing "Download"', () => {
@@ -156,7 +162,7 @@ describe('<EditAssetDialog />', () => {
 
       fireEvent.click(screen.getByLabelText('Download'));
       expect(downloadFile).toHaveBeenCalledWith(
-        'http://localhost:1337/uploads/Screenshot_2_5d4a574d61.png?updated_at=2021-10-04T09:42:31.670Z',
+        'http://localhost:1337/uploads/Screenshot_2_5d4a574d61.png',
         'Screenshot 2.png'
       );
     });

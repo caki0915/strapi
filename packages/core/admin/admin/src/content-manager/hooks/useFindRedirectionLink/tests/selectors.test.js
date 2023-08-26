@@ -1,5 +1,6 @@
+import { fixtures } from '@strapi/admin-test-utils';
+
 import selectMenuLinks from '../selectors';
-import { fixtures } from '../../../../../../../../admin-test-utils';
 
 describe('CONTENT MANAGER | Containers | CollectionTypeFormWrapper | selectors', () => {
   let store;

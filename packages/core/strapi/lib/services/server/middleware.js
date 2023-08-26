@@ -2,8 +2,17 @@
 
 const path = require('path');
 const { propOr, isArray, isNil } = require('lodash/fp');
+const { importDefault } = require('@strapi/utils');
 
 const getMiddlewareConfig = propOr([], 'config.middlewares');
+
+const instantiateMiddleware = (middlewareFactory, name, config, strapi) => {
+  try {
+    return middlewareFactory(config, { strapi });
+  } catch (e) {
+    throw new Error(`Middleware "${name}": ${e.message}`);
+  }
+};
 
 const resolveRouteMiddlewares = (route, strapi) => {
   const middlewaresConfig = getMiddlewareConfig(route);
@@ -45,7 +54,7 @@ const resolveMiddlewares = (config, strapi) => {
 
       middlewares.push({
         name: item,
-        handler: middlewareFactory({}, { strapi }),
+        handler: instantiateMiddleware(middlewareFactory, item, {}, strapi),
       });
 
       continue;
@@ -58,16 +67,17 @@ const resolveMiddlewares = (config, strapi) => {
         const middlewareFactory = strapi.middleware(name);
         middlewares.push({
           name,
-          handler: middlewareFactory(config, { strapi }),
+          handler: instantiateMiddleware(middlewareFactory, name, config, strapi),
         });
 
         continue;
       }
 
       if (resolve) {
+        const resolvedMiddlewareFactory = resolveCustomMiddleware(resolve, strapi);
         middlewares.push({
           name: resolve,
-          handler: resolveCustomMiddleware(resolve, strapi)(config, { strapi }),
+          handler: instantiateMiddleware(resolvedMiddlewareFactory, item, config, strapi),
         });
 
         continue;
@@ -81,7 +91,7 @@ const resolveMiddlewares = (config, strapi) => {
     );
   }
 
-  middlewares.forEach(middleware => {
+  middlewares.forEach((middleware) => {
     // NOTE: we replace null middlewares by a dumb one to avoid having to filter later on
     if (isNil(middleware.handler)) {
       middleware.handler = (_, next) => next();
@@ -103,14 +113,14 @@ const resolveCustomMiddleware = (resolve, strapi) => {
     modulePath = require.resolve(resolve);
   } catch (error) {
     if (error.code === 'MODULE_NOT_FOUND') {
-      modulePath = path.resolve(strapi.dirs.root, resolve);
+      modulePath = path.resolve(strapi.dirs.dist.root, resolve);
     } else {
       throw error;
     }
   }
 
   try {
-    return require(modulePath);
+    return importDefault(modulePath);
   } catch (err) {
     throw new Error(`Could not load middleware "${modulePath}".`);
   }

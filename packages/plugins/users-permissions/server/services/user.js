@@ -8,8 +8,9 @@
 
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
+const urlJoin = require('url-join');
 
-const { getAbsoluteServerUrl, sanitize } = require('@strapi/utils');
+const { getAbsoluteAdminUrl, getAbsoluteServerUrl, sanitize } = require('@strapi/utils');
 const { getService } = require('../utils');
 
 module.exports = ({ strapi }) => ({
@@ -34,35 +35,31 @@ module.exports = ({ strapi }) => ({
    * @return {Promise}
    */
   async add(values) {
-    if (values.password) {
-      values.password = await getService('user').hashPassword(values);
-    }
-
-    return strapi
-      .query('plugin::users-permissions.user')
-      .create({ data: values, populate: ['role'] });
+    return strapi.entityService.create('plugin::users-permissions.user', {
+      data: values,
+      populate: ['role'],
+    });
   },
 
   /**
    * Promise to edit a/an user.
+   * @param {string} userId
+   * @param {object} params
    * @return {Promise}
    */
-  async edit(params, values) {
-    if (values.password) {
-      values.password = await getService('user').hashPassword(values);
-    }
-
-    return strapi
-      .query('plugin::users-permissions.user')
-      .update({ where: params, data: values, populate: ['role'] });
+  async edit(userId, params = {}) {
+    return strapi.entityService.update('plugin::users-permissions.user', userId, {
+      data: params,
+      populate: ['role'],
+    });
   },
 
   /**
    * Promise to fetch a/an user.
    * @return {Promise}
    */
-  fetch(params, populate) {
-    return strapi.query('plugin::users-permissions.user').findOne({ where: params, populate });
+  fetch(id, params) {
+    return strapi.entityService.findOne('plugin::users-permissions.user', id, params);
   },
 
   /**
@@ -79,31 +76,8 @@ module.exports = ({ strapi }) => ({
    * Promise to fetch all users.
    * @return {Promise}
    */
-  fetchAll(params, populate) {
-    return strapi.query('plugin::users-permissions.user').findMany({ where: params, populate });
-  },
-
-  hashPassword(user = {}) {
-    return new Promise((resolve, reject) => {
-      if (!user.password || this.isHashed(user.password)) {
-        resolve(null);
-      } else {
-        bcrypt.hash(`${user.password}`, 10, (err, hash) => {
-          if (err) {
-            return reject(err);
-          }
-          resolve(hash);
-        });
-      }
-    });
-  },
-
-  isHashed(password) {
-    if (typeof password !== 'string' || !password) {
-      return false;
-    }
-
-    return password.split('$').length === 4;
+  fetchAll(params) {
+    return strapi.entityService.findMany('plugin::users-permissions.user', params);
   },
 
   /**
@@ -125,24 +99,35 @@ module.exports = ({ strapi }) => ({
 
     const settings = await pluginStore
       .get({ key: 'email' })
-      .then(storeEmail => storeEmail['email_confirmation'].options);
+      .then((storeEmail) => storeEmail.email_confirmation.options);
 
     // Sanitize the template's user information
     const sanitizedUserInfo = await sanitize.sanitizers.defaultSanitizeOutput(userSchema, user);
 
     const confirmationToken = crypto.randomBytes(20).toString('hex');
 
-    await this.edit({ id: user.id }, { confirmationToken });
+    await this.edit(user.id, { confirmationToken });
 
-    settings.message = await userPermissionService.template(settings.message, {
-      URL: `${getAbsoluteServerUrl(strapi.config)}/auth/email-confirmation`,
-      USER: sanitizedUserInfo,
-      CODE: confirmationToken,
-    });
+    const apiPrefix = strapi.config.get('api.rest.prefix');
 
-    settings.object = await userPermissionService.template(settings.object, {
-      USER: sanitizedUserInfo,
-    });
+    try {
+      settings.message = await userPermissionService.template(settings.message, {
+        URL: urlJoin(getAbsoluteServerUrl(strapi.config), apiPrefix, '/auth/email-confirmation'),
+        SERVER_URL: getAbsoluteServerUrl(strapi.config),
+        ADMIN_URL: getAbsoluteAdminUrl(strapi.config),
+        USER: sanitizedUserInfo,
+        CODE: confirmationToken,
+      });
+
+      settings.object = await userPermissionService.template(settings.object, {
+        USER: sanitizedUserInfo,
+      });
+    } catch {
+      strapi.log.error(
+        '[plugin::users-permissions.sendConfirmationEmail]: Failed to generate a template for "user confirmation email". Please make sure your email template is valid and does not contain invalid characters or patterns'
+      );
+      return;
+    }
 
     // Send an email to the user.
     await strapi

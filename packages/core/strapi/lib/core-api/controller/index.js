@@ -2,7 +2,7 @@
 
 const { getOr } = require('lodash/fp');
 
-const { contentTypes, sanitize } = require('@strapi/utils');
+const { contentTypes, sanitize, validate } = require('@strapi/utils');
 
 const { transformResponse } = require('./transform');
 const createSingleTypeController = require('./single-type');
@@ -18,16 +18,34 @@ const createController = ({ contentType }) => {
       return transformResponse(data, meta, { contentType });
     },
 
-    sanitizeOutput(data, ctx) {
+    async sanitizeOutput(data, ctx) {
       const auth = getAuthFromKoaContext(ctx);
 
       return sanitize.contentAPI.output(data, contentType, { auth });
     },
 
-    sanitizeInput(data, ctx) {
+    async sanitizeInput(data, ctx) {
       const auth = getAuthFromKoaContext(ctx);
 
       return sanitize.contentAPI.input(data, contentType, { auth });
+    },
+
+    async sanitizeQuery(ctx) {
+      const auth = getAuthFromKoaContext(ctx);
+
+      return sanitize.contentAPI.query(ctx.query, contentType, { auth });
+    },
+
+    async validateQuery(ctx) {
+      const auth = getAuthFromKoaContext(ctx);
+
+      return validate.contentAPI.query(ctx.query, contentType, { auth });
+    },
+
+    async validateInput(data, ctx) {
+      const auth = getAuthFromKoaContext(ctx);
+
+      return validate.contentAPI.input(data, contentType, { auth });
     },
   };
 

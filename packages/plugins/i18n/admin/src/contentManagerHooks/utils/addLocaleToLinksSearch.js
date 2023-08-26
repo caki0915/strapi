@@ -1,9 +1,10 @@
 import get from 'lodash/get';
-import { stringify, parse } from 'qs';
+import { parse, stringify } from 'qs';
+
 import getDefaultLocale from '../../utils/getDefaultLocale';
 
 const addLocaleToLinksSearch = (links, kind, contentTypeSchemas, locales, permissions) => {
-  return links.map(link => {
+  return links.map((link) => {
     const contentTypeUID = link.to.split(`/${kind}/`)[1];
 
     const contentTypeSchema = contentTypeSchemas.find(({ uid }) => uid === contentTypeUID);

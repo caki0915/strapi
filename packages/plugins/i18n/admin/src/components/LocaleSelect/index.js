@@ -1,10 +1,12 @@
 /* eslint-disable react/jsx-indent */
 import React from 'react';
-import { ComboboxOption, Combobox } from '@strapi/design-system/Combobox';
-import { useIntl } from 'react-intl';
+
+import { Combobox, ComboboxOption } from '@strapi/design-system';
 import PropTypes from 'prop-types';
-import useLocales from '../../hooks/useLocales';
+import { useIntl } from 'react-intl';
+
 import useDefaultLocales from '../../hooks/useDefaultLocales';
+import useLocales from '../../hooks/useLocales';
 import { getTrad } from '../../utils';
 
 /**
@@ -18,7 +20,7 @@ const LocaleSelect = React.memo(({ value, onClear, onLocaleChange, error }) => {
   const { locales } = useLocales();
 
   const options = (defaultLocales || [])
-    .map(locale => ({
+    .map((locale) => ({
       label: locale.name,
       value: locale.code,
     }))
@@ -40,8 +42,8 @@ const LocaleSelect = React.memo(({ value, onClear, onLocaleChange, error }) => {
       })}
       value={computedValue}
       onClear={value ? onClear : undefined}
-      onChange={selectedLocaleKey => {
-        const selectedLocale = options.find(locale => locale.value === selectedLocaleKey);
+      onChange={(selectedLocaleKey) => {
+        const selectedLocale = options.find((locale) => locale.value === selectedLocaleKey);
 
         if (selectedLocale) {
           onLocaleChange({ code: selectedLocale.value, displayName: selectedLocale.label });
@@ -52,7 +54,7 @@ const LocaleSelect = React.memo(({ value, onClear, onLocaleChange, error }) => {
         defaultMessage: 'Select',
       })}
     >
-      {options.map(option => (
+      {options.map((option) => (
         <ComboboxOption value={option.value} key={option.value}>
           {option.label}
         </ComboboxOption>
@@ -64,7 +66,7 @@ const LocaleSelect = React.memo(({ value, onClear, onLocaleChange, error }) => {
 LocaleSelect.defaultProps = {
   error: undefined,
   value: undefined,
-  onClear: () => {},
+  onClear() {},
   onLocaleChange: () => undefined,
 };
 

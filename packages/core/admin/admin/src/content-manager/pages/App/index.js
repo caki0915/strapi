@@ -1,33 +1,84 @@
-import React from 'react';
-import { Helmet } from 'react-helmet';
-import { Switch, Route, useRouteMatch, Redirect, useLocation } from 'react-router-dom';
-import { CheckPagePermissions, LoadingIndicatorPage, NotFound } from '@strapi/helper-plugin';
-import { Layout, HeaderLayout } from '@strapi/design-system/Layout';
-import { Main } from '@strapi/design-system/Main';
-import { useIntl } from 'react-intl';
+import React, { useEffect, useRef } from 'react';
+
+import { HeaderLayout, Layout, Main } from '@strapi/design-system';
+import {
+  AnErrorOccurred,
+  CheckPagePermissions,
+  LoadingIndicatorPage,
+  useGuidedTour,
+} from '@strapi/helper-plugin';
 import sortBy from 'lodash/sortBy';
-import permissions from '../../../permissions';
-import getTrad from '../../utils/getTrad';
-import DragLayer from '../../components/DragLayer';
+import { Helmet } from 'react-helmet';
+import { useIntl } from 'react-intl';
+import { useSelector } from 'react-redux';
+import { Redirect, Route, Switch, useLocation, useRouteMatch } from 'react-router-dom';
+
+import { DragLayer } from '../../../components/DragLayer';
+import { selectAdminPermissions } from '../../../pages/App/selectors';
 import ModelsContext from '../../contexts/ModelsContext';
+import getTrad from '../../utils/getTrad';
+import ItemTypes from '../../utils/ItemTypes';
 import CollectionTypeRecursivePath from '../CollectionTypeRecursivePath';
 import ComponentSettingsView from '../ComponentSetttingsView';
 import NoContentType from '../NoContentType';
 import NoPermissions from '../NoPermissions';
 import SingleTypeRecursivePath from '../SingleTypeRecursivePath';
+
+import { CardDragPreview } from './components/CardDragPreview';
+import { ComponentDragPreview } from './components/ComponentDragPreview';
+import { RelationDragPreview } from './components/RelationDragPreview';
 import LeftMenu from './LeftMenu';
-import useModels from './useModels';
+import useContentManagerInitData from './useContentManagerInitData';
 
-const cmPermissions = permissions.contentManager;
+function renderDraglayerItem({ type, item }) {
+  if ([ItemTypes.EDIT_FIELD, ItemTypes.FIELD].includes(type)) {
+    return <CardDragPreview labelField={item.labelField} />;
+  }
 
-const App = () => {
+  /**
+   * Because a user may have multiple relations / dynamic zones / repeable fields in the same content type,
+   * we append the fieldName for the item type to make them unique, however, we then want to extract that
+   * first type to apply the correct preview.
+   */
+  const [actualType] = type.split('_');
+
+  switch (actualType) {
+    case ItemTypes.COMPONENT:
+    case ItemTypes.DYNAMIC_ZONE:
+      return <ComponentDragPreview displayedValue={item.displayedValue} />;
+
+    case ItemTypes.RELATION:
+      return (
+        <RelationDragPreview
+          displayedValue={item.displayedValue}
+          status={item.status}
+          width={item.width}
+        />
+      );
+
+    default:
+      return null;
+  }
+}
+
+export const ContentManger = () => {
   const contentTypeMatch = useRouteMatch(`/content-manager/:kind/:uid`);
-  const { status, collectionTypeLinks, singleTypeLinks, models, refetchData } = useModels();
-  const authorisedModels = sortBy([...collectionTypeLinks, ...singleTypeLinks], model =>
+  const { status, collectionTypeLinks, singleTypeLinks, models, refetchData } =
+    useContentManagerInitData();
+  const authorisedModels = sortBy([...collectionTypeLinks, ...singleTypeLinks], (model) =>
     model.title.toLowerCase()
   );
   const { pathname } = useLocation();
   const { formatMessage } = useIntl();
+  const { startSection } = useGuidedTour();
+  const startSectionRef = useRef(startSection);
+  const permissions = useSelector(selectAdminPermissions);
+
+  useEffect(() => {
+    if (startSectionRef.current) {
+      startSectionRef.current('contentManager');
+    }
+  }, []);
 
   if (status === 'loading') {
     return (
@@ -43,14 +94,20 @@ const App = () => {
     );
   }
 
+  // Array of models that are displayed in the content manager
+  const supportedModelsToDisplay = models.filter(({ isDisplayed }) => isDisplayed);
+
   // Redirect the user to the 403 page
-  // FIXME when changing the routing
-  if (authorisedModels.length === 0 && models.length > 0 && pathname !== '/content-manager/403') {
+  if (
+    authorisedModels.length === 0 &&
+    supportedModelsToDisplay.length > 0 &&
+    pathname !== '/content-manager/403'
+  ) {
     return <Redirect to="/content-manager/403" />;
   }
 
   // Redirect the user to the create content type page
-  if (models.length === 0 && pathname !== '/content-manager/no-content-types') {
+  if (supportedModelsToDisplay.length === 0 && pathname !== '/content-manager/no-content-types') {
     return <Redirect to="/content-manager/no-content-types" />;
   }
 
@@ -66,11 +123,15 @@ const App = () => {
 
   return (
     <Layout sideNav={<LeftMenu />}>
-      <DragLayer />
+      <Helmet
+        title={formatMessage({ id: getTrad('plugin.name'), defaultMessage: 'Content Manager' })}
+      />
+
+      <DragLayer renderItem={renderDraglayerItem} />
       <ModelsContext.Provider value={{ refetchData }}>
         <Switch>
           <Route path="/content-manager/components/:uid/configurations/edit">
-            <CheckPagePermissions permissions={cmPermissions.componentsConfigurations}>
+            <CheckPagePermissions permissions={permissions.contentManager.componentsConfigurations}>
               <ComponentSettingsView />
             </CheckPagePermissions>
           </Route>
@@ -86,24 +147,9 @@ const App = () => {
           <Route path="/content-manager/no-content-types">
             <NoContentType />
           </Route>
-          <Route path="" component={NotFound} />
+          <Route path="" component={AnErrorOccurred} />
         </Switch>
       </ModelsContext.Provider>
     </Layout>
-  );
-};
-
-export { App };
-
-export default () => {
-  const { formatMessage } = useIntl();
-
-  return (
-    <>
-      <Helmet
-        title={formatMessage({ id: getTrad('plugin.name'), defaultMessage: 'Content Manager' })}
-      />
-      <App />
-    </>
   );
 };

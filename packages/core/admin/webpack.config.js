@@ -3,30 +3,31 @@
 const path = require('path');
 const webpack = require('webpack');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const ForkTsCheckerPlugin = require('fork-ts-checker-webpack-plugin');
+const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const TerserPlugin = require('terser-webpack-plugin');
+const { ESBuildMinifyPlugin } = require('esbuild-loader');
 const WebpackBar = require('webpackbar');
-const NodePolyfillPlugin = require('node-polyfill-webpack-plugin');
-const isWsl = require('is-wsl');
+const browserslist = require('browserslist');
+const browserslistToEsbuild = require('browserslist-to-esbuild');
+
 const alias = require('./webpack.alias');
 const getClientEnvironment = require('./env');
+const { createPluginsExcludePath } = require('./utils/create-plugins-exclude-path');
 
 module.exports = ({
-  entry,
-  cacheDir,
-  pluginsPath,
   dest,
+  entry,
   env,
   optimize,
+  plugins,
   options = {
     backend: 'http://localhost:1337',
     adminPath: '/admin/',
     features: [],
   },
-  roots = {
-    eeRoot: './ee/admin',
-    ceRoot: './admin/src',
-  },
+  tsConfigFilePath,
+  enforceSourceMaps,
 }) => {
   const isProduction = env === 'production';
 
@@ -34,10 +35,6 @@ module.exports = ({
 
   const webpackPlugins = isProduction
     ? [
-        new webpack.IgnorePlugin({
-          resourceRegExp: /^\.\/locale$/,
-          contextRegExp: /moment$/,
-        }),
         new MiniCssExtractPlugin({
           filename: '[name].[chunkhash].css',
           chunkFilename: '[name].[chunkhash].chunkhash.css',
@@ -47,14 +44,25 @@ module.exports = ({
       ]
     : [];
 
+  const nodeModulePluginPaths = Object.values(plugins)
+    .filter((plugin) => plugin.info?.packageName || plugin.info?.required)
+    .map((plugin) => plugin.pathToPlugin);
+
+  const excludeRegex = createPluginsExcludePath(nodeModulePluginPaths);
+
+  // Ensure we use the config in this directory, even if run with a different
+  // working directory
+  const browserslistConfig = browserslist.loadConfig({ path: __dirname });
+  const buildTarget = browserslistToEsbuild(browserslistConfig);
+
   return {
     mode: isProduction ? 'production' : 'development',
-    bail: isProduction ? true : false,
-    devtool: false,
+    bail: !!isProduction,
+    devtool: isProduction && !enforceSourceMaps ? false : 'source-map',
     experiments: {
       topLevelAwait: true,
     },
-    entry,
+    entry: [entry],
     output: {
       path: dest,
       publicPath: options.adminPath,
@@ -66,78 +74,49 @@ module.exports = ({
     optimization: {
       minimize: optimize,
       minimizer: [
-        // Copied from react-scripts
-        new TerserPlugin({
-          terserOptions: {
-            parse: {
-              ecma: 8,
-            },
-            compress: {
-              ecma: 5,
-              warnings: false,
-              comparisons: false,
-              inline: 2,
-            },
-            mangle: {
-              safari10: true,
-            },
-            output: {
-              ecma: 5,
-              comments: false,
-              ascii_only: true,
-            },
-          },
-          parallel: !isWsl,
-          // Enable file caching
-          cache: true,
-          sourceMap: false,
+        new ESBuildMinifyPlugin({
+          target: buildTarget,
+          css: true, // Apply minification to CSS assets
         }),
       ],
+      moduleIds: 'deterministic',
       runtimeChunk: true,
     },
     module: {
       rules: [
         {
-          test: /\.m?js$/,
-          // TODO remove when plugins are built separately
-          include: [cacheDir, ...pluginsPath],
+          test: /\.tsx?$/,
+          loader: require.resolve('esbuild-loader'),
+          exclude: excludeRegex,
+          options: {
+            loader: 'tsx',
+            target: buildTarget,
+          },
+        },
+        {
+          test: /\.(js|jsx|mjs)$/,
+          exclude: excludeRegex,
           use: {
-            loader: require.resolve('babel-loader'),
+            loader: require.resolve('esbuild-loader'),
             options: {
-              cacheDirectory: true,
-              cacheCompression: isProduction,
-              compact: isProduction,
-              presets: [
-                require.resolve('@babel/preset-env'),
-                require.resolve('@babel/preset-react'),
-              ],
-              plugins: [
-                [
-                  require.resolve('@strapi/babel-plugin-switch-ee-ce'),
-                  {
-                    // Imported this tells the custom plugin where to look for the ee folder
-                    roots,
-                  },
-                ],
-                require.resolve('@babel/plugin-proposal-class-properties'),
-                require.resolve('@babel/plugin-syntax-dynamic-import'),
-                require.resolve('@babel/plugin-transform-modules-commonjs'),
-                require.resolve('@babel/plugin-proposal-async-generator-functions'),
-
-                [
-                  require.resolve('@babel/plugin-transform-runtime'),
-                  {
-                    // absoluteRuntime: true,s
-                    helpers: true,
-                    regenerator: true,
-                  },
-                ],
-                [require.resolve('babel-plugin-styled-components'), { pure: true }],
-              ],
+              loader: 'jsx',
+              target: buildTarget,
             },
           },
         },
-
+        /**
+         * This is used to avoid webpack import errors where
+         * the origin is strict EcmaScript Module.
+         *
+         * e. g. a module with javascript mimetype, a '.mjs' file,
+         * or a '.js' file where the package.json contains '"type": "module"'
+         */
+        {
+          test: /\.m?jsx?$/,
+          resolve: {
+            fullySpecified: false,
+          },
+        },
         {
           test: /\.css$/i,
           use: ['style-loader', 'css-loader'],
@@ -173,21 +152,22 @@ module.exports = ({
     },
     resolve: {
       alias,
-      symlinks: false,
-      extensions: ['.js', '.jsx', '.react.js'],
-      mainFields: ['browser', 'jsnext:main', 'main'],
+      extensions: ['.js', '.jsx', '.react.js', '.ts', '.tsx'],
     },
     plugins: [
       new HtmlWebpackPlugin({
         inject: true,
         template: path.resolve(__dirname, 'index.html'),
-        // FIXME
-        // favicon: path.resolve(__dirname, 'admin/src/favicon.ico'),
       }),
       new webpack.DefinePlugin(envVariables),
 
-      new NodePolyfillPlugin(),
+      new ForkTsCheckerPlugin({
+        typescript: {
+          configFile: tsConfigFilePath,
+        },
+      }),
+      !isProduction && process.env.REACT_REFRESH !== 'false' && new ReactRefreshWebpackPlugin(),
       ...webpackPlugins,
-    ],
+    ].filter(Boolean),
   };
 };

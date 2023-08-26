@@ -1,11 +1,13 @@
 import React, { memo, useState } from 'react';
+
 import PropTypes from 'prop-types';
+
 import ContentTypeCollapse from '../ContentTypeCollapse';
 
 const ContentTypeCollapses = ({ actions, isFormDisabled, pathToData, subjects }) => {
   const [collapseToOpen, setCollapseToOpen] = useState(null);
 
-  const handleClickToggleCollapse = collapseName => {
+  const handleClickToggleCollapse = (collapseName) => {
     const nextCollapseToOpen = collapseToOpen === collapseName ? null : collapseName;
 
     setCollapseToOpen(nextCollapseToOpen);

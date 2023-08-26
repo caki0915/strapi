@@ -1,57 +1,40 @@
 'use strict';
 
-const path = require('path');
+const findRoot = require('find-root');
 
-const alias = [
-  'object-assign',
-  'whatwg-fetch',
-  '@fortawesome/fontawesome-svg-core',
-  '@fortawesome/free-solid-svg-icons',
-  'classnames',
+const aliasExactMatch = [
+  '@strapi/design-system',
+  '@strapi/helper-plugin',
+  '@strapi/icons',
+  'date-fns',
+  'formik',
   'history',
-  'hoist-non-react-statics',
   'immer',
-  'immutable',
-  'invariant',
-  'lodash',
-  'moment',
   'qs',
+  'lodash',
   'react',
-  'react-copy-to-clipboard',
   'react-dnd',
   'react-dnd-html5-backend',
   'react-dom',
   'react-error-boundary',
-  'react-fast-compare',
   'react-helmet',
   'react-is',
   'react-intl',
-  'react-loadable',
+  'react-query',
   'react-redux',
-  'react-router',
   'react-router-dom',
-  'react-transition-group',
-  'react-tooltip',
-  'react-virtualized',
+  'react-window',
   'react-select',
   'redux',
-  'redux-immutable',
   'reselect',
   'styled-components',
   'yup',
 ];
 
-module.exports = alias.reduce(
-  (acc, curr) => {
-    acc[`${curr}$`] = require.resolve(curr);
+// See https://webpack.js.org/configuration/resolve/
+module.exports = {
+  ...aliasExactMatch.reduce((acc, moduleName) => {
+    acc[`${moduleName}$`] = findRoot(require.resolve(moduleName));
     return acc;
-  },
-  {
-    'react-select/animated': require.resolve('react-select/animated'),
-    'react-select/async': require.resolve('react-select/async'),
-    'react-select/async-creatable': require.resolve('react-select/async-creatable'),
-    'react-select/base': require.resolve('react-select/base'),
-    'react-select/creatable': require.resolve('react-select/creatable'),
-    ee_else_ce: path.resolve(__dirname),
-  }
-);
+  }, {}),
+};

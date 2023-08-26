@@ -5,18 +5,14 @@ const {
   contentTypes: { isWritableAttribute },
 } = require('@strapi/utils');
 
-module.exports = context => {
+module.exports = (context) => {
   const { strapi } = context;
 
   const { naming, mappers, attributes } = strapi.plugin('graphql').service('utils');
   const extension = strapi.plugin('graphql').service('extension');
 
-  const {
-    getComponentInputName,
-    getContentTypeInputName,
-    getEnumName,
-    getDynamicZoneInputName,
-  } = naming;
+  const { getComponentInputName, getContentTypeInputName, getEnumName, getDynamicZoneInputName } =
+    naming;
 
   const {
     isStrapiScalar,
@@ -32,20 +28,16 @@ module.exports = context => {
     buildInputType(contentType) {
       const { attributes, modelType } = contentType;
 
-      const name = (modelType === 'component'
-        ? getComponentInputName
-        : getContentTypeInputName
+      const name = (
+        modelType === 'component' ? getComponentInputName : getContentTypeInputName
       ).call(null, contentType);
 
       return inputObjectType({
         name,
 
         definition(t) {
-          const isFieldEnabled = fieldName => {
-            return extension
-              .shadowCRUD(contentType.uid)
-              .field(fieldName)
-              .hasInputEnabled();
+          const isFieldEnabled = (fieldName) => {
+            return extension.shadowCRUD(contentType.uid).field(fieldName).hasInputEnabled();
           };
 
           const validAttributes = Object.entries(attributes).filter(([attributeName]) => {
@@ -58,8 +50,15 @@ module.exports = context => {
           }
 
           validAttributes.forEach(([attributeName, attribute]) => {
+            // Enums
+            if (isEnumeration(attribute)) {
+              const enumTypeName = getEnumName(contentType, attributeName);
+
+              t.field(attributeName, { type: enumTypeName });
+            }
+
             // Scalars
-            if (isStrapiScalar(attribute)) {
+            else if (isStrapiScalar(attribute)) {
               const gqlScalar = mappers.strapiScalarToGraphQLScalar(attribute.type);
 
               t.field(attributeName, { type: gqlScalar });
@@ -73,7 +72,11 @@ module.exports = context => {
                 return;
               }
 
-              isMultiple ? t.list.id(attributeName) : t.id(attributeName);
+              if (isMultiple) {
+                t.list.id(attributeName);
+              } else {
+                t.id(attributeName);
+              }
             }
 
             // Regular Relations (ignore polymorphic relations)
@@ -84,14 +87,11 @@ module.exports = context => {
 
               const isToManyRelation = attribute.relation.endsWith('Many');
 
-              isToManyRelation ? t.list.id(attributeName) : t.id(attributeName);
-            }
-
-            // Enums
-            else if (isEnumeration(attribute)) {
-              const enumTypeName = getEnumName(contentType, attributeName);
-
-              t.field(attributeName, { type: enumTypeName });
+              if (isToManyRelation) {
+                t.list.id(attributeName);
+              } else {
+                t.id(attributeName);
+              }
             }
 
             // Components

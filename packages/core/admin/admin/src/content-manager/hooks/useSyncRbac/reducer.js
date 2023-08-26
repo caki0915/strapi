@@ -4,7 +4,8 @@
  */
 
 import produce from 'immer';
-import { SET_PERMISSIONS, RESET_PERMISSIONS } from './constants';
+
+import { RESET_PERMISSIONS, SET_PERMISSIONS } from './constants';
 
 export const initialState = {
   permissions: null,
@@ -12,7 +13,7 @@ export const initialState = {
 
 const rbacManagerReducer = (state = initialState, action) =>
   // eslint-disable-next-line consistent-return
-  produce(state, draftState => {
+  produce(state, (draftState) => {
     switch (action.type) {
       case SET_PERMISSIONS: {
         draftState.permissions = Object.entries(action.permissions).reduce((acc, current) => {

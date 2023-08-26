@@ -4,7 +4,7 @@ const { get } = require('lodash/fp');
 
 const utils = require('@strapi/utils');
 
-const { sanitize, pipeAsync } = utils;
+const { sanitize, validate, pipeAsync } = utils;
 const { ApplicationError } = utils.errors;
 
 module.exports = ({ strapi }) => {
@@ -33,7 +33,7 @@ module.exports = ({ strapi }) => {
 
       const targetContentType = strapi.getModel(targetUID);
 
-      return async (parent, args = {}, context) => {
+      return async (parent, args = {}, context = {}) => {
         const { auth } = context.state;
 
         const transformedArgs = transformArgs(args, {
@@ -41,15 +41,22 @@ module.exports = ({ strapi }) => {
           usePagination: true,
         });
 
+        await validate.contentAPI.query(transformedArgs, targetContentType, {
+          auth,
+        });
+        const sanitizedQuery = await sanitize.contentAPI.query(transformedArgs, targetContentType, {
+          auth,
+        });
+
         const data = await strapi.entityService.load(
           contentTypeUID,
           parent,
           attributeName,
-          transformedArgs
+          sanitizedQuery
         );
 
         const info = {
-          args: transformedArgs,
+          args: sanitizedQuery,
           resourceUID: targetUID,
         };
 
@@ -58,8 +65,8 @@ module.exports = ({ strapi }) => {
         // so that the sanitize util can work properly.
         if (isMorphAttribute) {
           // Helpers used for the data cleanup
-          const wrapData = dataToWrap => ({ [attributeName]: dataToWrap });
-          const sanitizeData = dataToSanitize => {
+          const wrapData = (dataToWrap) => ({ [attributeName]: dataToWrap });
+          const sanitizeData = (dataToSanitize) => {
             return sanitize.contentAPI.output(dataToSanitize, contentType, { auth });
           };
           const unwrapData = get(attributeName);
@@ -72,7 +79,7 @@ module.exports = ({ strapi }) => {
 
         // If this is a to-many relation, it returns an object that
         // matches what the entity-response-collection's resolvers expect
-        else if (isToMany) {
+        if (isToMany) {
           return toEntityResponseCollection(data, info);
         }
 

@@ -1,6 +1,7 @@
 'use strict';
 
-const { merge } = require('lodash/fp');
+const { merge, map, difference, uniq } = require('lodash/fp');
+const { pipeAsync } = require('@strapi/utils');
 const { getService } = require('./utils');
 const adminActions = require('./config/admin-actions');
 const adminConditions = require('./config/admin-conditions');
@@ -9,15 +10,31 @@ const defaultAdminAuthSettings = {
   providers: {
     autoRegister: false,
     defaultRole: null,
+    ssoLockedRoles: null,
   },
 };
 
-const registerPermissionActions = () => {
-  getService('permission').actionProvider.registerMany(adminActions.actions);
+const registerPermissionActions = async () => {
+  await getService('permission').actionProvider.registerMany(adminActions.actions);
 };
 
-const registerAdminConditions = () => {
-  getService('permission').conditionProvider.registerMany(adminConditions.conditions);
+const registerAdminConditions = async () => {
+  await getService('permission').conditionProvider.registerMany(adminConditions.conditions);
+};
+
+const registerModelHooks = () => {
+  const { sendDidChangeInterfaceLanguage } = getService('metrics');
+
+  strapi.db.lifecycles.subscribe({
+    models: ['admin::user'],
+    afterCreate: sendDidChangeInterfaceLanguage,
+    afterDelete: sendDidChangeInterfaceLanguage,
+    afterUpdate({ params }) {
+      if (params.data.preferedLanguage) {
+        sendDidChangeInterfaceLanguage();
+      }
+    },
+  });
 };
 
 const syncAuthSettings = async () => {
@@ -37,25 +54,46 @@ const syncAuthSettings = async () => {
   await adminStore.set({ key: 'auth', value: newAuthSettings });
 };
 
+const syncAPITokensPermissions = async () => {
+  const validPermissions = strapi.contentAPI.permissions.providers.action.keys();
+  const permissionsInDB = await pipeAsync(
+    strapi.query('admin::api-token-permission').findMany,
+    map('action')
+  )();
+
+  const unknownPermissions = uniq(difference(permissionsInDB, validPermissions));
+
+  if (unknownPermissions.length > 0) {
+    await strapi
+      .query('admin::api-token-permission')
+      .deleteMany({ where: { action: { $in: unknownPermissions } } });
+  }
+};
+
 module.exports = async () => {
-  registerAdminConditions();
-  registerPermissionActions();
+  await registerAdminConditions();
+  await registerPermissionActions();
+  registerModelHooks();
 
   const permissionService = getService('permission');
   const userService = getService('user');
   const roleService = getService('role');
   const apiTokenService = getService('api-token');
+  const transferService = getService('transfer');
+  const tokenService = getService('token');
 
   await roleService.createRolesIfNoneExist();
   await roleService.resetSuperAdminPermissions();
   await roleService.displayWarningIfNoSuperAdmin();
 
-  await permissionService.ensureBoundPermissionsInDatabase();
   await permissionService.cleanPermissionsInDatabase();
 
   await userService.displayWarningIfUsersDontHaveRole();
 
   await syncAuthSettings();
+  await syncAPITokensPermissions();
 
-  apiTokenService.createSaltIfNotDefined();
+  apiTokenService.checkSaltIsDefined();
+  transferService.token.checkSaltIsDefined();
+  tokenService.checkSecretIsDefined();
 };

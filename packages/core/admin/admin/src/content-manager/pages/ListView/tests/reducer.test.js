@@ -1,6 +1,6 @@
 import produce from 'immer';
-import { getData, getDataSucceeded } from '../actions';
 
+import { getData, getDataSucceeded } from '../actions';
 import reducer from '../reducer';
 
 describe('CONTENT MANAGER | CONTAINERS | ListView | reducer', () => {
@@ -10,6 +10,7 @@ describe('CONTENT MANAGER | CONTAINERS | ListView | reducer', () => {
     state = {
       data: [],
       isLoading: true,
+      components: [],
       contentType: {},
       initialDisplayedHeaders: [],
       displayedHeaders: [],
@@ -33,7 +34,7 @@ describe('CONTENT MANAGER | CONTAINERS | ListView | reducer', () => {
       state.displayedHeaders = ['test'];
       state.isLoading = false;
 
-      const expected = produce(state, draft => {
+      const expected = produce(state, (draft) => {
         draft.data = [];
         draft.isLoading = true;
         draft.contentType = 'test';
@@ -46,7 +47,7 @@ describe('CONTENT MANAGER | CONTAINERS | ListView | reducer', () => {
   });
 
   it('should handle the getDataSucceeded action correctly', () => {
-    const expected = produce(state, draft => {
+    const expected = produce(state, (draft) => {
       draft.pagination = { count: 1 };
       draft.data = ['test'];
       draft.isLoading = false;

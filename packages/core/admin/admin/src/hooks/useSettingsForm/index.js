@@ -1,10 +1,23 @@
 import { useEffect, useReducer } from 'react';
-import { request, useNotification, useOverlayBlocker } from '@strapi/helper-plugin';
-import { get, has, omit } from 'lodash';
-import { checkFormValidity, formatAPIErrors } from '../../utils';
-import { initialState, reducer } from './reducer';
-import init from './init';
 
+import {
+  getYupInnerErrors,
+  useFetchClient,
+  useNotification,
+  useOverlayBlocker,
+} from '@strapi/helper-plugin';
+import omit from 'lodash/omit';
+
+import { formatAPIErrors } from '../../utils/formatAPIErrors';
+
+import init from './init';
+import { initialState, reducer } from './reducer';
+
+/**
+ * TODO: refactor this, it's confusing and hard to read.
+ * It's also only used in `Settings/pages/SingleSignOn` so it can
+ * probably be deleted and everything written there...
+ */
 const useSettingsForm = (endPoint, schema, cbSuccess, fieldsToPick) => {
   const [
     { formErrors, initialData, isLoading, modifiedData, showHeaderButtonLoader, showHeaderLoader },
@@ -13,10 +26,14 @@ const useSettingsForm = (endPoint, schema, cbSuccess, fieldsToPick) => {
   const toggleNotification = useNotification();
   const { lockApp, unlockApp } = useOverlayBlocker();
 
+  const { get, put } = useFetchClient();
+
   useEffect(() => {
     const getData = async () => {
       try {
-        const { data } = await request(endPoint, { method: 'GET' });
+        const {
+          data: { data },
+        } = await get(endPoint);
 
         dispatch({
           type: 'GET_DATA_SUCCEEDED',
@@ -61,10 +78,16 @@ const useSettingsForm = (endPoint, schema, cbSuccess, fieldsToPick) => {
     });
   };
 
-  const handleSubmit = async e => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const errors = await checkFormValidity(modifiedData, schema);
+    let errors = null;
+
+    try {
+      await schema.validate(modifiedData, { abortEarly: false });
+    } catch (err) {
+      errors = getYupInnerErrors(err);
+    }
 
     dispatch({
       type: 'SET_ERRORS',
@@ -78,17 +101,18 @@ const useSettingsForm = (endPoint, schema, cbSuccess, fieldsToPick) => {
         dispatch({
           type: 'ON_SUBMIT',
         });
-
         const cleanedData = omit(modifiedData, ['confirmPassword', 'registrationToken']);
 
         if (cleanedData.roles) {
-          cleanedData.roles = cleanedData.roles.map(role => role.id);
+          cleanedData.roles = cleanedData.roles.map((role) => role.id);
+        }
+        if (cleanedData.ssoLockedRoles) {
+          cleanedData.ssoLockedRoles = [...new Set(cleanedData.ssoLockedRoles)];
         }
 
-        const { data } = await request(endPoint, {
-          method: 'PUT',
-          body: cleanedData,
-        });
+        const {
+          data: { data },
+        } = await put(endPoint, cleanedData);
 
         cbSuccess(data);
 
@@ -102,9 +126,9 @@ const useSettingsForm = (endPoint, schema, cbSuccess, fieldsToPick) => {
           message: { id: 'notification.success.saved' },
         });
       } catch (err) {
-        const data = get(err, 'response.payload', { data: {} });
+        const data = err?.response?.payload ?? { data: {} };
 
-        if (has(data, 'data') && typeof data.data === 'string') {
+        if (!!data?.data && typeof data.data === 'string') {
           toggleNotification({
             type: 'warning',
             message: data.data,

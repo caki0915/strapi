@@ -1,10 +1,9 @@
 import { useState } from 'react';
-import { useNotification, useTracking } from '@strapi/helper-plugin';
-import isEmpty from 'lodash/isEmpty';
-import sortBy from 'lodash/sortBy';
-import toLower from 'lodash/toLower';
+
+import { useCollator, useFilter, useNotification, useTracking } from '@strapi/helper-plugin';
 import isEqual from 'lodash/isEqual';
-import matchSorter from 'match-sorter';
+import { useIntl } from 'react-intl';
+
 import useDataManager from '../../hooks/useDataManager';
 import useFormModalNavigation from '../../hooks/useFormModalNavigation';
 import pluginId from '../../pluginId';
@@ -24,36 +23,22 @@ const useContentTypeBuilderMenu = () => {
   const { trackUsage } = useTracking();
   const [search, setSearch] = useState('');
   const { onOpenModalCreateSchema, onOpenModalEditCategory } = useFormModalNavigation();
+  const { locale } = useIntl();
 
-  const componentsData = sortBy(
-    Object.keys(componentsGroupedByCategory).map(category => ({
-      name: category,
-      title: category,
-      isEditable: isInDevelopmentMode,
-      onClickEdit: (e, data) => {
-        e.stopPropagation();
+  const { startsWith } = useFilter(locale, {
+    sensitivity: 'base',
+  });
 
-        if (canOpenModalCreateCTorComponent) {
-          onOpenModalEditCategory(data.name);
-        } else {
-          toggleNotificationCannotCreateSchema();
-        }
-      },
-      links: sortBy(
-        componentsGroupedByCategory[category].map(compo => ({
-          name: compo.uid,
-          to: `/plugins/${pluginId}/component-categories/${category}/${compo.uid}`,
-          title: compo.schema.displayName,
-        })),
-        obj => obj.title
-      ),
-    })),
-    obj => obj.title
-  );
+  /**
+   * @type {Intl.Collator}
+   */
+  const formatter = useCollator(locale, {
+    sensitivity: 'base',
+  });
 
   const canOpenModalCreateCTorComponent =
-    !Object.keys(contentTypes).some(ct => contentTypes[ct].isTemporary === true) &&
-    !Object.keys(components).some(component => components[component].isTemporary === true) &&
+    !Object.keys(contentTypes).some((ct) => contentTypes[ct].isTemporary === true) &&
+    !Object.keys(components).some((component) => components[component].isTemporary === true) &&
     isEqual(modifiedData, initialData);
 
   const handleClickOpenModalCreateCollectionType = () => {
@@ -111,19 +96,43 @@ const useContentTypeBuilderMenu = () => {
     toggleNotification({
       type: 'info',
       message: {
-        id: `${getTrad('notification.info.creating.notSaved')}`,
+        id: getTrad('notification.info.creating.notSaved'),
         defaultMessage: 'Please save your work before creating a new collection type or component',
       },
     });
   };
 
-  const displayedContentTypes = sortedContentTypesList.filter(obj => obj.visible);
+  const componentsData = Object.entries(componentsGroupedByCategory)
+    .map(([category, components]) => ({
+      name: category,
+      title: category,
+      isEditable: isInDevelopmentMode,
+      onClickEdit(e, data) {
+        e.stopPropagation();
+
+        if (canOpenModalCreateCTorComponent) {
+          onOpenModalEditCategory(data.name);
+        } else {
+          toggleNotificationCannotCreateSchema();
+        }
+      },
+      links: components
+        .map((component) => ({
+          name: component.uid,
+          to: `/plugins/${pluginId}/component-categories/${category}/${component.uid}`,
+          title: component.schema.displayName,
+        }))
+        .sort((a, b) => formatter.compare(a.title, b.title)),
+    }))
+    .sort((a, b) => formatter.compare(a.title, b.title));
+
+  const displayedContentTypes = sortedContentTypesList.filter((obj) => obj.visible);
 
   const data = [
     {
       name: 'models',
       title: {
-        id: `${getTrad('menu.section.models.name.plural')}`,
+        id: `${getTrad('menu.section.models.name')}`,
         defaultMessage: 'Collection Types',
       },
       customLink: isInDevelopmentMode && {
@@ -131,12 +140,12 @@ const useContentTypeBuilderMenu = () => {
         defaultMessage: 'Create new collection type',
         onClick: handleClickOpenModalCreateCollectionType,
       },
-      links: displayedContentTypes.filter(contentType => contentType.kind === 'collectionType'),
+      links: displayedContentTypes.filter((contentType) => contentType.kind === 'collectionType'),
     },
     {
       name: 'singleTypes',
       title: {
-        id: `${getTrad('menu.section.single-types.name.plural')}`,
+        id: `${getTrad('menu.section.single-types.name')}`,
         defaultMessage: 'Single Types',
       },
       customLink: isInDevelopmentMode && {
@@ -144,12 +153,12 @@ const useContentTypeBuilderMenu = () => {
         defaultMessage: 'Create new single type',
         onClick: handleClickOpenModalCreateSingleType,
       },
-      links: displayedContentTypes.filter(singleType => singleType.kind === 'singleType'),
+      links: displayedContentTypes.filter((singleType) => singleType.kind === 'singleType'),
     },
     {
       name: 'components',
       title: {
-        id: `${getTrad('menu.section.components.name.plural')}`,
+        id: `${getTrad('menu.section.components.name')}`,
         defaultMessage: 'Components',
       },
       customLink: isInDevelopmentMode && {
@@ -159,31 +168,42 @@ const useContentTypeBuilderMenu = () => {
       },
       links: componentsData,
     },
-  ];
+  ].map((section) => {
+    const hasChild = section.links.some((l) => Array.isArray(l.links));
 
-  const matchByTitle = links =>
-    matchSorter(links, toLower(search), { keys: [item => toLower(item.title)] });
-
-  const getMenu = () => {
-    // Maybe we can do it simpler with matchsorter wildcards ?
-    return data.map(section => {
-      const hasChild = section.links.some(l => !isEmpty(l.links));
-
-      if (hasChild) {
-        return {
-          ...section,
-          links: section.links.map(l => ({ ...l, links: matchByTitle(l.links) })),
-        };
-      }
-
+    if (hasChild) {
       return {
         ...section,
-        links: matchByTitle(section.links),
-      };
-    });
-  };
+        links: section.links
+          .map((link) => {
+            const filteredLinks = link.links.filter((link) => startsWith(link.title, search));
 
-  return { menu: getMenu(), searchValue: search, onSearchChange: setSearch };
+            if (filteredLinks.length === 0) {
+              return null;
+            }
+
+            return {
+              ...link,
+              links: filteredLinks.sort((a, b) => formatter.compare(a.title, b.title)),
+            };
+          })
+          .filter(Boolean),
+      };
+    }
+
+    return {
+      ...section,
+      links: section.links
+        .filter((link) => startsWith(link.title, search))
+        .sort((a, b) => formatter.compare(a.title, b.title)),
+    };
+  });
+
+  return {
+    menu: data,
+    searchValue: search,
+    onSearchChange: setSearch,
+  };
 };
 
 export default useContentTypeBuilderMenu;

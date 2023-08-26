@@ -1,10 +1,15 @@
 import React from 'react';
+
+import { Box } from '@strapi/design-system';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
-import { Box } from '@strapi/design-system/Box';
 
 const EmptyAssetCard = styled(Box)`
-  background: linear-gradient(180deg, rgba(234, 234, 239, 0) 0%, #eaeaef 100%);
+  background: linear-gradient(
+    180deg,
+    rgba(234, 234, 239, 0) 0%,
+    ${({ theme }) => theme.colors.neutral200} 100%
+  );
   opacity: 0.33;
 `;
 

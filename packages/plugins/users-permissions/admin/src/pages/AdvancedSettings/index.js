@@ -1,36 +1,45 @@
-import React, { useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient } from 'react-query';
-import { useIntl } from 'react-intl';
-import { Formik } from 'formik';
+import React from 'react';
+
+import {
+  Box,
+  Button,
+  ContentLayout,
+  Flex,
+  Grid,
+  GridItem,
+  HeaderLayout,
+  Main,
+  Option,
+  Select,
+  Typography,
+  useNotifyAT,
+} from '@strapi/design-system';
 import {
   CheckPagePermissions,
   Form,
   GenericInput,
   LoadingIndicatorPage,
   SettingsPageTitle,
+  useAPIErrorHandler,
+  useFetchClient,
   useFocusWhenNavigate,
   useNotification,
   useOverlayBlocker,
   useRBAC,
 } from '@strapi/helper-plugin';
-import { useNotifyAT } from '@strapi/design-system/LiveRegions';
-import { Main } from '@strapi/design-system/Main';
-import { HeaderLayout, ContentLayout } from '@strapi/design-system/Layout';
-import { Button } from '@strapi/design-system/Button';
-import { Box } from '@strapi/design-system/Box';
-import { Stack } from '@strapi/design-system/Stack';
-import { Select, Option } from '@strapi/design-system/Select';
-import { Typography } from '@strapi/design-system/Typography';
-import { Grid, GridItem } from '@strapi/design-system/Grid';
-import Check from '@strapi/icons/Check';
-import pluginPermissions from '../../permissions';
+import { Check } from '@strapi/icons';
+import { Formik } from 'formik';
+import { useIntl } from 'react-intl';
+import { useMutation, useQuery, useQueryClient } from 'react-query';
+
+import { PERMISSIONS } from '../../constants';
 import { getTrad } from '../../utils';
+
 import layout from './utils/layout';
 import schema from './utils/schema';
-import { fetchData, putAdvancedSettings } from './utils/api';
 
 const ProtectedAdvancedSettingsPage = () => (
-  <CheckPagePermissions permissions={pluginPermissions.readAdvancedSettings}>
+  <CheckPagePermissions permissions={PERMISSIONS.readAdvancedSettings}>
     <AdvancedSettingsPage />
   </CheckPagePermissions>
 );
@@ -41,39 +50,47 @@ const AdvancedSettingsPage = () => {
   const { lockApp, unlockApp } = useOverlayBlocker();
   const { notifyStatus } = useNotifyAT();
   const queryClient = useQueryClient();
+  const { get, put } = useFetchClient();
+  const { formatAPIError } = useAPIErrorHandler();
+
   useFocusWhenNavigate();
 
-  const updatePermissions = useMemo(
-    () => ({ update: pluginPermissions.updateAdvancedSettings }),
-    []
-  );
   const {
     isLoading: isLoadingForPermissions,
     allowedActions: { canUpdate },
-  } = useRBAC(updatePermissions);
+  } = useRBAC({ update: PERMISSIONS.updateAdvancedSettings });
 
-  const { status: isLoadingData, data } = useQuery('advanced', () => fetchData(), {
-    onSuccess: () => {
-      notifyStatus(
-        formatMessage({
-          id: getTrad('Form.advancedSettings.data.loaded'),
-          defaultMessage: 'Advanced settings data has been loaded',
-        })
-      );
+  const { isLoading: isLoadingData, data } = useQuery(
+    ['users-permissions', 'advanced'],
+    async () => {
+      const { data } = await get('/users-permissions/advanced');
+
+      return data;
     },
-    onError: () => {
-      toggleNotification({
-        type: 'warning',
-        message: { id: getTrad('notification.error'), defaultMessage: 'An error occured' },
-      });
-    },
-  });
+    {
+      onSuccess() {
+        notifyStatus(
+          formatMessage({
+            id: getTrad('Form.advancedSettings.data.loaded'),
+            defaultMessage: 'Advanced settings data has been loaded',
+          })
+        );
+      },
+      onError() {
+        toggleNotification({
+          type: 'warning',
+          message: { id: getTrad('notification.error'), defaultMessage: 'An error occured' },
+        });
+      },
+    }
+  );
 
-  const isLoading = isLoadingForPermissions || isLoadingData !== 'success';
+  const isLoading = isLoadingForPermissions || isLoadingData;
 
-  const submitMutation = useMutation(body => putAdvancedSettings(body), {
-    onSuccess: async () => {
-      await queryClient.invalidateQueries('advanced');
+  const submitMutation = useMutation((body) => put('/users-permissions/advanced', body), {
+    async onSuccess() {
+      await queryClient.invalidateQueries(['users-permissions', 'advanced']);
+
       toggleNotification({
         type: 'success',
         message: { id: getTrad('notification.success.saved'), defaultMessage: 'Saved' },
@@ -81,11 +98,12 @@ const AdvancedSettingsPage = () => {
 
       unlockApp();
     },
-    onError: () => {
+    onError(error) {
       toggleNotification({
         type: 'warning',
-        message: { id: getTrad('notification.error'), defaultMessage: 'An error occured' },
+        message: formatAPIError(error),
       });
+
       unlockApp();
     },
     refetchActive: true,
@@ -93,12 +111,15 @@ const AdvancedSettingsPage = () => {
 
   const { isLoading: isSubmittingForm } = submitMutation;
 
-  const handleSubmit = async body => {
+  const handleSubmit = async (body) => {
     lockApp();
 
-    const urlConfirmation = body.email_confirmation ? body.email_confirmation_redirection : '';
-
-    await submitMutation.mutateAsync({ ...body, email_confirmation_redirection: urlConfirmation });
+    submitMutation.mutate({
+      ...body,
+      email_confirmation_redirection: body.email_confirmation
+        ? body.email_confirmation_redirection
+        : '',
+    });
   };
 
   if (isLoading) {
@@ -138,7 +159,7 @@ const AdvancedSettingsPage = () => {
         validationSchema={schema}
         enableReinitialize
       >
-        {({ errors, values, handleChange, isSubmitting }) => {
+        {({ errors, values, handleChange, isSubmitting, dirty }) => {
           return (
             <Form>
               <HeaderLayout
@@ -150,11 +171,11 @@ const AdvancedSettingsPage = () => {
                   <Button
                     loading={isSubmitting}
                     type="submit"
-                    disabled={!canUpdate}
+                    disabled={canUpdate ? !dirty : !canUpdate}
                     startIcon={<Check />}
-                    size="L"
+                    size="S"
                   >
-                    {formatMessage({ id: getTrad('Form.save'), defaultMessage: 'Save' })}
+                    {formatMessage({ id: 'global.save', defaultMessage: 'Save' })}
                   </Button>
                 }
               />
@@ -168,10 +189,10 @@ const AdvancedSettingsPage = () => {
                   paddingLeft={7}
                   paddingRight={7}
                 >
-                  <Stack size={4}>
+                  <Flex direction="column" alignItems="stretch" gap={4}>
                     <Typography variant="delta" as="h2">
                       {formatMessage({
-                        id: getTrad('Form.title.advancedSettings'),
+                        id: 'global.settings',
                         defaultMessage: 'Settings',
                       })}
                     </Typography>
@@ -188,10 +209,11 @@ const AdvancedSettingsPage = () => {
                             defaultMessage:
                               'It will attach the new authenticated user to the selected role.',
                           })}
-                          onChange={e =>
-                            handleChange({ target: { name: 'default_role', value: e } })}
+                          onChange={(e) =>
+                            handleChange({ target: { name: 'default_role', value: e } })
+                          }
                         >
-                          {data.roles.map(role => {
+                          {data.roles.map((role) => {
                             return (
                               <Option key={role.type} value={role.type}>
                                 {role.name}
@@ -200,7 +222,7 @@ const AdvancedSettingsPage = () => {
                           })}
                         </Select>
                       </GridItem>
-                      {layout.map(input => {
+                      {layout.map((input) => {
                         let value = values[input.name];
 
                         if (!value) {
@@ -223,7 +245,7 @@ const AdvancedSettingsPage = () => {
                         );
                       })}
                     </Grid>
-                  </Stack>
+                  </Flex>
                 </Box>
               </ContentLayout>
             </Form>

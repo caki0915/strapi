@@ -1,12 +1,16 @@
 import React from 'react';
-import { render as renderTL, fireEvent, screen, waitFor, within } from '@testing-library/react';
-import { ThemeProvider, lightTheme } from '@strapi/design-system';
-import { QueryClientProvider, QueryClient } from 'react-query';
+
+import { lightTheme, ThemeProvider } from '@strapi/design-system';
+import { TrackingProvider } from '@strapi/helper-plugin';
+import { fireEvent, render as renderTL, screen, waitFor, within } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from 'react-query';
+
 import en from '../../../translations/en.json';
 import { UploadAssetDialog } from '../UploadAssetDialog';
+
 import { server } from './server';
 
-jest.mock('../../../utils/getTrad', () => x => x);
+jest.mock('../../../utils/getTrad', () => (x) => x);
 
 jest.mock('react-intl', () => ({
   useIntl: () => ({ formatMessage: jest.fn(({ id }) => en[id] || id) }),
@@ -20,50 +24,60 @@ const queryClient = new QueryClient({
   },
 });
 
-const render = (props = { onClose: () => {} }) =>
+const render = (props = { onClose() {} }) =>
   renderTL(
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider theme={lightTheme}>
-        <UploadAssetDialog {...props} />
-      </ThemeProvider>
+      <TrackingProvider>
+        <ThemeProvider theme={lightTheme}>
+          <UploadAssetDialog {...props} />
+        </ThemeProvider>
+      </TrackingProvider>
     </QueryClientProvider>,
-    { container: document.body }
+    { container: document.getElementById('app') }
   );
 
 describe('UploadAssetDialog', () => {
-  beforeAll(() => server.listen());
+  let confirmSpy;
+  beforeAll(() => {
+    confirmSpy = jest.spyOn(window, 'confirm');
+    confirmSpy.mockImplementation(jest.fn(() => true));
+    server.listen();
+  });
   afterEach(() => server.resetHandlers());
-  afterAll(() => server.close());
+  afterAll(() => {
+    confirmSpy.mockRestore();
+    server.close();
+  });
 
   describe('from computer', () => {
     it('snapshots the component', () => {
-      const { container } = render();
+      render();
 
-      expect(container).toMatchSnapshot();
+      expect(document.body).toMatchSnapshot();
     });
 
     it('closes the dialog when clicking on cancel on the add asset step', () => {
       const onCloseSpy = jest.fn();
-      render({ onClose: onCloseSpy, onSuccess: () => {} });
+      render({ onClose: onCloseSpy, onSuccess() {} });
 
       fireEvent.click(screen.getByText('app.components.Button.cancel'));
 
       expect(onCloseSpy).toBeCalled();
     });
 
-    it('closes the dialog when clicking on cancel on the pending asset step', () => {
+    it('open confirm box when clicking on cancel on the pending asset step', () => {
       const file = new File(['Some stuff'], 'test.png', { type: 'image/png' });
       const onCloseSpy = jest.fn();
 
-      const { container } = render({ onClose: onCloseSpy, onSuccess: () => {} });
+      render({ onClose: onCloseSpy, onSuccess() {} });
 
       const fileList = [file];
-      fileList.item = i => fileList[i];
+      fileList.item = (i) => fileList[i];
 
-      fireEvent.change(container.querySelector('[type="file"]'), { target: { files: fileList } });
+      fireEvent.change(document.querySelector('[type="file"]'), { target: { files: fileList } });
       fireEvent.click(screen.getByText('app.components.Button.cancel'));
 
-      expect(onCloseSpy).toBeCalled();
+      expect(window.confirm).toBeCalled();
     });
 
     [
@@ -75,21 +89,26 @@ describe('UploadAssetDialog', () => {
       it(`shows ${number} valid ${mime} file`, () => {
         const onCloseSpy = jest.fn();
 
+        // see https://github.com/testing-library/react-testing-library/issues/470
+        Object.defineProperty(HTMLMediaElement.prototype, 'muted', {
+          set() {},
+        });
+
         const file = new File(['Some stuff'], `test.${ext}`, { type: mime });
 
         const fileList = [file];
-        fileList.item = i => fileList[i];
+        fileList.item = (i) => fileList[i];
 
-        const { container } = render({ onClose: onCloseSpy, onSuccess: () => {} });
+        render({ onClose: onCloseSpy, onSuccess() {} });
 
-        fireEvent.change(container.querySelector('[type="file"]'), {
+        fireEvent.change(document.querySelector('[type="file"]'), {
           target: { files: fileList },
         });
 
-        expect(screen.getByText('Upload new asset')).toBeInTheDocument();
+        expect(screen.getAllByText(`Add new assets`).length).toBe(2);
         expect(
           screen.getByText(
-            '{number, plural, =0 {No asset} one {1 asset} other {# assets}} selected'
+            '{number, plural, =0 {No asset} one {1 asset} other {# assets}} ready to upload'
           )
         ).toBeInTheDocument();
         expect(
@@ -104,11 +123,11 @@ describe('UploadAssetDialog', () => {
 
   describe('from url', () => {
     it('snapshots the component', () => {
-      const { container } = render();
+      render();
 
       fireEvent.click(screen.getByText('From url'));
 
-      expect(container).toMatchSnapshot();
+      expect(document.body).toMatchSnapshot();
     });
 
     it('shows an error message when the asset does not exist', async () => {
@@ -126,7 +145,7 @@ describe('UploadAssetDialog', () => {
       fireEvent.change(screen.getByLabelText('URL'), { target: { value: urls } });
       fireEvent.click(screen.getByText('Next'));
 
-      await waitFor(() => expect(screen.getByText('Network Error')).toBeInTheDocument());
+      await waitFor(() => expect(screen.getByText('Failed to fetch')).toBeInTheDocument());
     });
 
     it('snapshots the component with 4 URLs: 3 valid and one in failure', async () => {
@@ -145,7 +164,7 @@ describe('UploadAssetDialog', () => {
 
       const assets = [
         {
-          name: 'http://localhost:5000/an-image.png',
+          name: 'an-image.png',
           ext: 'png',
           mime: 'image/png',
           source: 'url',
@@ -154,7 +173,7 @@ describe('UploadAssetDialog', () => {
           rawFile: new File([''], 'image/png'),
         },
         {
-          name: 'http://localhost:5000/a-pdf.pdf',
+          name: 'a-pdf.pdf',
           ext: 'pdf',
           mime: 'application/pdf',
           source: 'url',
@@ -163,7 +182,7 @@ describe('UploadAssetDialog', () => {
           rawFile: new File([''], 'application/pdf'),
         },
         {
-          name: 'http://localhost:5000/a-video.mp4',
+          name: 'a-video.mp4',
           ext: 'mp4',
           mime: 'video/mp4',
           source: 'url',
@@ -172,7 +191,7 @@ describe('UploadAssetDialog', () => {
           rawFile: new File([''], 'video/mp4'),
         },
         {
-          name: 'http://localhost:5000/not-working-like-cors.lutin',
+          name: 'not-working-like-cors.lutin',
           ext: 'lutin',
           mime: 'application/json',
           source: 'url',
@@ -185,16 +204,16 @@ describe('UploadAssetDialog', () => {
       await waitFor(() =>
         expect(
           screen.getByText(
-            '{number, plural, =0 {No asset} one {1 asset} other {# assets}} selected'
+            '{number, plural, =0 {No asset} one {1 asset} other {# assets}} ready to upload'
           )
         ).toBeInTheDocument()
       );
-      expect(screen.getByText('Upload new asset')).toBeInTheDocument();
+      expect(screen.getAllByText(`Add new assets`).length).toBe(2);
       expect(
         screen.getByText('Manage the assets before adding them to the Media Library')
       ).toBeInTheDocument();
 
-      assets.forEach(asset => {
+      assets.forEach((asset) => {
         const dialog = within(screen.getByRole('dialog'));
         const card = within(dialog.getAllByLabelText(asset.name)[0]);
 

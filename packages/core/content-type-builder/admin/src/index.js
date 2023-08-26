@@ -1,7 +1,9 @@
 import { prefixPluginTranslations } from '@strapi/helper-plugin';
+
 import pluginPkg from '../../package.json';
-import pluginPermissions from './permissions';
+
 import PluginIcon from './components/PluginIcon';
+import { PERMISSIONS } from './constants';
 import pluginId from './pluginId';
 import reducers from './reducers';
 import formsAPI from './utils/formAPI';
@@ -19,14 +21,8 @@ export default {
         id: `${pluginId}.plugin.name`,
         defaultMessage: 'Content Types Builder',
       },
-      permissions: pluginPermissions.main,
-      Component: async () => {
-        const component = await import(
-          /* webpackChunkName: "content-type-builder" */ './pages/App'
-        );
-
-        return component;
-      },
+      permissions: PERMISSIONS.main,
+      Component: () => import(/* webpackChunkName: "content-type-builder" */ './pages/App'),
     });
 
     app.registerPlugin({
@@ -41,7 +37,7 @@ export default {
   bootstrap() {},
   async registerTrads({ locales }) {
     const importedTrads = await Promise.all(
-      locales.map(locale => {
+      locales.map((locale) => {
         return import(
           /* webpackChunkName: "content-type-builder-translation-[request]" */ `./translations/${locale}.json`
         )

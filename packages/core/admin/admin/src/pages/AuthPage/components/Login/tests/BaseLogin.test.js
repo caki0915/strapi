@@ -1,12 +1,19 @@
 import React from 'react';
+
+import { lightTheme, ThemeProvider } from '@strapi/design-system';
 import { render } from '@testing-library/react';
-import { ThemeProvider } from '@strapi/design-system/ThemeProvider';
-import { lightTheme } from '@strapi/design-system/themes';
-import { Router } from 'react-router-dom';
-import { IntlProvider } from 'react-intl';
-import * as yup from 'yup';
 import { createMemoryHistory } from 'history';
+import { IntlProvider } from 'react-intl';
+import { Router } from 'react-router-dom';
+import * as yup from 'yup';
+
 import BaseLogin from '../BaseLogin';
+
+jest.mock('../../../../../hooks/useConfigurations', () => () => ({
+  logos: {
+    auth: { custom: 'customAuthLogo.png', default: 'defaultAuthLogo.png' },
+  },
+}));
 
 describe('ADMIN | PAGES | AUTH | BaseLogin', () => {
   it('should render and match the snapshot', () => {
@@ -22,6 +29,57 @@ describe('ADMIN | PAGES | AUTH | BaseLogin', () => {
     );
 
     expect(container.firstChild).toMatchInlineSnapshot(`
+      .c27 {
+        border: 0;
+        -webkit-clip: rect(0 0 0 0);
+        clip: rect(0 0 0 0);
+        height: 1px;
+        margin: -1px;
+        overflow: hidden;
+        padding: 0;
+        position: absolute;
+        width: 1px;
+      }
+
+      .c8 {
+        font-weight: 600;
+        font-size: 2rem;
+        line-height: 1.25;
+        color: #32324d;
+      }
+
+      .c10 {
+        font-size: 1rem;
+        line-height: 1.5;
+        color: #666687;
+      }
+
+      .c13 {
+        font-size: 0.75rem;
+        line-height: 1.33;
+        font-weight: 600;
+        color: #32324d;
+      }
+
+      .c15 {
+        font-size: 0.875rem;
+        line-height: 1.43;
+        color: #d02b20;
+      }
+
+      .c28 {
+        font-size: 0.875rem;
+        line-height: 1.43;
+        color: #32324d;
+      }
+
+      .c36 {
+        font-size: 0.75rem;
+        line-height: 1.33;
+        font-weight: 600;
+        color: #ffffff;
+      }
+
       .c1 {
         background: #ffffff;
         padding-top: 48px;
@@ -37,15 +95,59 @@ describe('ADMIN | PAGES | AUTH | BaseLogin', () => {
         padding-bottom: 4px;
       }
 
-      .c8 {
+      .c9 {
         padding-bottom: 32px;
       }
 
-      .c34 {
+      .c22 {
+        padding-right: 12px;
+        padding-left: 8px;
+      }
+
+      .c23 {
+        background: transparent;
+        border-style: none;
+      }
+
+      .c31 {
+        padding-left: 8px;
+      }
+
+      .c32 {
+        background: #4945ff;
+        padding: 8px;
+        padding-right: 16px;
+        padding-left: 16px;
+        border-radius: 4px;
+        border-color: #4945ff;
+        border: 1px solid #4945ff;
+        width: 100%;
+        cursor: pointer;
+      }
+
+      .c38 {
         padding-top: 16px;
       }
 
-      .c10 {
+      .c3 {
+        -webkit-align-items: center;
+        -webkit-box-align: center;
+        -ms-flex-align: center;
+        align-items: center;
+        display: -webkit-box;
+        display: -webkit-flex;
+        display: -ms-flexbox;
+        display: flex;
+        -webkit-flex-direction: row;
+        -ms-flex-direction: row;
+        flex-direction: row;
+      }
+
+      .c11 {
+        -webkit-align-items: stretch;
+        -webkit-box-align: stretch;
+        -ms-flex-align: stretch;
+        align-items: stretch;
         display: -webkit-box;
         display: -webkit-flex;
         display: -ms-flexbox;
@@ -53,291 +155,29 @@ describe('ADMIN | PAGES | AUTH | BaseLogin', () => {
         -webkit-flex-direction: column;
         -ms-flex-direction: column;
         flex-direction: column;
-      }
-
-      .c10 > * {
-        margin-top: 0;
-        margin-bottom: 0;
-      }
-
-      .c10 > * + * {
-        margin-top: 24px;
-      }
-
-      .c0:focus-visible {
-        outline: none;
-      }
-
-      .c3 {
-        display: -webkit-box;
-        display: -webkit-flex;
-        display: -ms-flexbox;
-        display: flex;
-        -webkit-flex-direction: row;
-        -ms-flex-direction: row;
-        flex-direction: row;
-        -webkit-align-items: center;
-        -webkit-box-align: center;
-        -ms-flex-align: center;
-        align-items: center;
-      }
-
-      .c33 {
-        display: -webkit-box;
-        display: -webkit-flex;
-        display: -ms-flexbox;
-        display: flex;
-        -webkit-flex-direction: row;
-        -ms-flex-direction: row;
-        flex-direction: row;
-        -webkit-box-pack: center;
-        -webkit-justify-content: center;
-        -ms-flex-pack: center;
-        justify-content: center;
-        -webkit-align-items: center;
-        -webkit-box-align: center;
-        -ms-flex-align: center;
-        align-items: center;
-      }
-
-      .c36 {
-        color: #4945ff;
-        font-weight: 600;
-        font-size: 0.6875rem;
-        line-height: 1.45;
-        text-transform: uppercase;
-      }
-
-      .c35 {
-        display: -webkit-inline-box;
-        display: -webkit-inline-flex;
-        display: -ms-inline-flexbox;
-        display: inline-flex;
-        -webkit-align-items: center;
-        -webkit-box-align: center;
-        -ms-flex-align: center;
-        align-items: center;
-        text-transform: uppercase;
-        -webkit-text-decoration: none;
-        text-decoration: none;
-        position: relative;
-        outline: none;
-      }
-
-      .c35 svg path {
-        fill: #4945ff;
-      }
-
-      .c35 svg {
-        font-size: 0.625rem;
-      }
-
-      .c35:after {
-        -webkit-transition-property: all;
-        transition-property: all;
-        -webkit-transition-duration: 0.2s;
-        transition-duration: 0.2s;
-        border-radius: 8px;
-        content: '';
-        position: absolute;
-        top: -4px;
-        bottom: -4px;
-        left: -4px;
-        right: -4px;
-        border: 2px solid transparent;
-      }
-
-      .c35:focus-visible {
-        outline: none;
-      }
-
-      .c35:focus-visible:after {
-        border-radius: 8px;
-        content: '';
-        position: absolute;
-        top: -5px;
-        bottom: -5px;
-        left: -5px;
-        right: -5px;
-        border: 2px solid #4945ff;
-      }
-
-      .c32 {
-        font-weight: 600;
-        color: #32324d;
-        font-size: 0.75rem;
-        line-height: 1.33;
-      }
-
-      .c29 {
-        display: -webkit-box;
-        display: -webkit-flex;
-        display: -ms-flexbox;
-        display: flex;
-        cursor: pointer;
-        padding: 8px;
-        border-radius: 4px;
-        background: #ffffff;
-        border: 1px solid #dcdce4;
-        position: relative;
-        outline: none;
-      }
-
-      .c29 svg {
-        height: 12px;
-        width: 12px;
-      }
-
-      .c29 svg > g,
-      .c29 svg path {
-        fill: #ffffff;
-      }
-
-      .c29[aria-disabled='true'] {
-        pointer-events: none;
-      }
-
-      .c29:after {
-        -webkit-transition-property: all;
-        transition-property: all;
-        -webkit-transition-duration: 0.2s;
-        transition-duration: 0.2s;
-        border-radius: 8px;
-        content: '';
-        position: absolute;
-        top: -4px;
-        bottom: -4px;
-        left: -4px;
-        right: -4px;
-        border: 2px solid transparent;
-      }
-
-      .c29:focus-visible {
-        outline: none;
-      }
-
-      .c29:focus-visible:after {
-        border-radius: 8px;
-        content: '';
-        position: absolute;
-        top: -5px;
-        bottom: -5px;
-        left: -5px;
-        right: -5px;
-        border: 2px solid #4945ff;
-      }
-
-      .c30 {
-        -webkit-align-items: center;
-        -webkit-box-align: center;
-        -ms-flex-align: center;
-        align-items: center;
-        padding: 8px 16px;
-        background: #4945ff;
-        border: none;
-        border: 1px solid #4945ff;
-        background: #4945ff;
-        display: -webkit-inline-box;
-        display: -webkit-inline-flex;
-        display: -ms-inline-flexbox;
-        display: inline-flex;
-        -webkit-box-pack: center;
-        -webkit-justify-content: center;
-        -ms-flex-pack: center;
-        justify-content: center;
-        width: 100%;
-      }
-
-      .c30 .sc-ksdxgE {
-        display: -webkit-box;
-        display: -webkit-flex;
-        display: -ms-flexbox;
-        display: flex;
-        -webkit-align-items: center;
-        -webkit-box-align: center;
-        -ms-flex-align: center;
-        align-items: center;
-      }
-
-      .c30 .c31 {
-        color: #ffffff;
-      }
-
-      .c30[aria-disabled='true'] {
-        border: 1px solid #dcdce4;
-        background: #eaeaef;
-      }
-
-      .c30[aria-disabled='true'] .c31 {
-        color: #666687;
-      }
-
-      .c30[aria-disabled='true'] svg > g,
-      .c30[aria-disabled='true'] svg path {
-        fill: #666687;
-      }
-
-      .c30[aria-disabled='true']:active {
-        border: 1px solid #dcdce4;
-        background: #eaeaef;
-      }
-
-      .c30[aria-disabled='true']:active .c31 {
-        color: #666687;
-      }
-
-      .c30[aria-disabled='true']:active svg > g,
-      .c30[aria-disabled='true']:active svg path {
-        fill: #666687;
-      }
-
-      .c30:hover {
-        border: 1px solid #7b79ff;
-        background: #7b79ff;
-      }
-
-      .c30:active {
-        border: 1px solid #4945ff;
-        background: #4945ff;
-      }
-
-      .c13 {
-        font-weight: 600;
-        color: #32324d;
-        font-size: 0.75rem;
-        line-height: 1.33;
-      }
-
-      .c14 {
-        color: #d02b20;
-        font-size: 0.875rem;
-        line-height: 1.43;
-      }
-
-      .c15 {
-        line-height: 0;
-      }
-
-      .c21 {
-        padding-right: 12px;
-        padding-left: 8px;
+        gap: 24px;
       }
 
       .c12 {
+        -webkit-align-items: stretch;
+        -webkit-box-align: stretch;
+        -ms-flex-align: stretch;
+        align-items: stretch;
         display: -webkit-box;
         display: -webkit-flex;
         display: -ms-flexbox;
         display: flex;
-        -webkit-flex-direction: row;
-        -ms-flex-direction: row;
-        flex-direction: row;
+        -webkit-flex-direction: column;
+        -ms-flex-direction: column;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .c17 {
         -webkit-align-items: center;
         -webkit-box-align: center;
         -ms-flex-align: center;
         align-items: center;
-      }
-
-      .c16 {
         display: -webkit-box;
         display: -webkit-flex;
         display: -ms-flexbox;
@@ -349,64 +189,273 @@ describe('ADMIN | PAGES | AUTH | BaseLogin', () => {
         -webkit-justify-content: space-between;
         -ms-flex-pack: justify;
         justify-content: space-between;
+      }
+
+      .c24 {
+        -webkit-align-items: center;
+        -webkit-box-align: center;
+        -ms-flex-align: center;
+        align-items: center;
+        display: -webkit-box;
+        display: -webkit-flex;
+        display: -ms-flexbox;
+        display: flex;
+        -webkit-flex-direction: row;
+        -ms-flex-direction: row;
+        flex-direction: row;
+        -webkit-box-pack: unset;
+        -webkit-justify-content: unset;
+        -ms-flex-pack: unset;
+        justify-content: unset;
+      }
+
+      .c33 {
+        -webkit-align-items: center;
+        -webkit-box-align: center;
+        -ms-flex-align: center;
+        align-items: center;
+        display: -webkit-inline-box;
+        display: -webkit-inline-flex;
+        display: -ms-inline-flexbox;
+        display: inline-flex;
+        -webkit-flex-direction: row;
+        -ms-flex-direction: row;
+        flex-direction: row;
+        gap: 8px;
+        -webkit-box-pack: center;
+        -webkit-justify-content: center;
+        -ms-flex-pack: center;
+        justify-content: center;
+      }
+
+      .c37 {
+        -webkit-align-items: center;
+        -webkit-box-align: center;
+        -ms-flex-align: center;
+        align-items: center;
+        display: -webkit-box;
+        display: -webkit-flex;
+        display: -ms-flexbox;
+        display: flex;
+        -webkit-flex-direction: row;
+        -ms-flex-direction: row;
+        flex-direction: row;
+        -webkit-box-pack: center;
+        -webkit-justify-content: center;
+        -ms-flex-pack: center;
+        justify-content: center;
+      }
+
+      .c34 {
+        position: relative;
+        outline: none;
+      }
+
+      .c34 > svg {
+        height: 12px;
+        width: 12px;
+      }
+
+      .c34 > svg > g,
+      .c34 > svg path {
+        fill: #ffffff;
+      }
+
+      .c34[aria-disabled='true'] {
+        pointer-events: none;
+      }
+
+      .c34:after {
+        -webkit-transition-property: all;
+        transition-property: all;
+        -webkit-transition-duration: 0.2s;
+        transition-duration: 0.2s;
+        border-radius: 8px;
+        content: '';
+        position: absolute;
+        top: -4px;
+        bottom: -4px;
+        left: -4px;
+        right: -4px;
+        border: 2px solid transparent;
+      }
+
+      .c34:focus-visible {
+        outline: none;
+      }
+
+      .c34:focus-visible:after {
+        border-radius: 8px;
+        content: '';
+        position: absolute;
+        top: -5px;
+        bottom: -5px;
+        left: -5px;
+        right: -5px;
+        border: 2px solid #4945ff;
+      }
+
+      .c30 {
+        height: 18px;
+        min-width: 18px;
+        margin: 0;
+        border-radius: 4px;
+        border: 1px solid #c0c0cf;
+        -webkit-appearance: none;
+        background-color: #ffffff;
+        cursor: pointer;
+      }
+
+      .c30:checked {
+        background-color: #4945ff;
+        border: 1px solid #4945ff;
+      }
+
+      .c30:checked:after {
+        content: '';
+        display: block;
+        position: relative;
+        background: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAiIGhlaWdodD0iOCIgdmlld0JveD0iMCAwIDEwIDgiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHBhdGgKICAgIGQ9Ik04LjU1MzIzIDAuMzk2OTczQzguNjMxMzUgMC4zMTYzNTUgOC43NjA1MSAwLjMxNTgxMSA4LjgzOTMxIDAuMzk1NzY4TDkuODYyNTYgMS40MzQwN0M5LjkzODkzIDEuNTExNTcgOS45MzkzNSAxLjYzNTkgOS44NjM0OSAxLjcxMzlMNC4wNjQwMSA3LjY3NzI0QzMuOTg1OSA3Ljc1NzU1IDMuODU3MDcgNy43NTgwNSAzLjc3ODM0IDcuNjc4MzRMMC4xMzg2NiAzLjk5MzMzQzAuMDYxNzc5OCAzLjkxNTQ5IDAuMDYxNzEwMiAzLjc5MDMyIDAuMTM4NTA0IDMuNzEyNEwxLjE2MjEzIDIuNjczNzJDMS4yNDAzOCAyLjU5NDMyIDEuMzY4NDMgMi41OTQyMiAxLjQ0NjggMi42NzM0OEwzLjkyMTc0IDUuMTc2NDdMOC41NTMyMyAwLjM5Njk3M1oiCiAgICBmaWxsPSJ3aGl0ZSIKICAvPgo8L3N2Zz4=) no-repeat no-repeat center center;
+        width: 10px;
+        height: 10px;
+        left: 50%;
+        top: 50%;
+        -webkit-transform: translateX(-50%) translateY(-50%);
+        -ms-transform: translateX(-50%) translateY(-50%);
+        transform: translateX(-50%) translateY(-50%);
+      }
+
+      .c30:checked:disabled:after {
+        background: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAiIGhlaWdodD0iOCIgdmlld0JveD0iMCAwIDEwIDgiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHBhdGgKICAgIGQ9Ik04LjU1MzIzIDAuMzk2OTczQzguNjMxMzUgMC4zMTYzNTUgOC43NjA1MSAwLjMxNTgxMSA4LjgzOTMxIDAuMzk1NzY4TDkuODYyNTYgMS40MzQwN0M5LjkzODkzIDEuNTExNTcgOS45MzkzNSAxLjYzNTkgOS44NjM0OSAxLjcxMzlMNC4wNjQwMSA3LjY3NzI0QzMuOTg1OSA3Ljc1NzU1IDMuODU3MDcgNy43NTgwNSAzLjc3ODM0IDcuNjc4MzRMMC4xMzg2NiAzLjk5MzMzQzAuMDYxNzc5OCAzLjkxNTQ5IDAuMDYxNzEwMiAzLjc5MDMyIDAuMTM4NTA0IDMuNzEyNEwxLjE2MjEzIDIuNjczNzJDMS4yNDAzOCAyLjU5NDMyIDEuMzY4NDMgMi41OTQyMiAxLjQ0NjggMi42NzM0OEwzLjkyMTc0IDUuMTc2NDdMOC41NTMyMyAwLjM5Njk3M1oiCiAgICBmaWxsPSIjOEU4RUE5IgogIC8+Cjwvc3ZnPg==) no-repeat no-repeat center center;
+      }
+
+      .c30:disabled {
+        background-color: #dcdce4;
+        border: 1px solid #c0c0cf;
+      }
+
+      .c30:indeterminate {
+        background-color: #4945ff;
+        border: 1px solid #4945ff;
+      }
+
+      .c30:indeterminate:after {
+        content: '';
+        display: block;
+        position: relative;
+        color: white;
+        height: 2px;
+        width: 10px;
+        background-color: #ffffff;
+        left: 50%;
+        top: 50%;
+        -webkit-transform: translateX(-50%) translateY(-50%);
+        -ms-transform: translateX(-50%) translateY(-50%);
+        transform: translateX(-50%) translateY(-50%);
+      }
+
+      .c30:indeterminate:disabled {
+        background-color: #dcdce4;
+        border: 1px solid #c0c0cf;
+      }
+
+      .c30:indeterminate:disabled:after {
+        background-color: #8e8ea9;
+      }
+
+      .c35 {
+        height: 2rem;
+      }
+
+      .c35 svg {
+        height: 0.75rem;
+        width: auto;
+      }
+
+      .c35[aria-disabled='true'] {
+        border: 1px solid #dcdce4;
+        background: #eaeaef;
+      }
+
+      .c35[aria-disabled='true'] .c7 {
+        color: #666687;
+      }
+
+      .c35[aria-disabled='true'] svg > g,.c35[aria-disabled='true'] svg path {
+        fill: #666687;
+      }
+
+      .c35[aria-disabled='true']:active {
+        border: 1px solid #dcdce4;
+        background: #eaeaef;
+      }
+
+      .c35[aria-disabled='true']:active .c7 {
+        color: #666687;
+      }
+
+      .c35[aria-disabled='true']:active svg > g,.c35[aria-disabled='true']:active svg path {
+        fill: #666687;
+      }
+
+      .c35:hover {
+        border: 1px solid #7b79ff;
+        background: #7b79ff;
+      }
+
+      .c35:active {
+        border: 1px solid #4945ff;
+        background: #4945ff;
+      }
+
+      .c35 svg > g,
+      .c35 svg path {
+        fill: #ffffff;
+      }
+
+      .c14 {
+        display: -webkit-box;
+        display: -webkit-flex;
+        display: -ms-flexbox;
+        display: flex;
         -webkit-align-items: center;
         -webkit-box-align: center;
         -ms-flex-align: center;
         align-items: center;
       }
 
-      .c18 {
-        border: none;
-        border-radius: 4px;
-        padding-left: 16px;
-        padding-right: 16px;
-        color: #32324d;
-        font-weight: 400;
-        font-size: 0.875rem;
-        display: block;
-        width: 100%;
+      .c16 {
+        line-height: 0;
       }
 
-      .c18::-webkit-input-placeholder {
-        color: #8e8ea9;
-        opacity: 1;
+      .c29 {
+        display: -webkit-box;
+        display: -webkit-flex;
+        display: -ms-flexbox;
+        display: flex;
+        -webkit-align-items: flex-start;
+        -webkit-box-align: flex-start;
+        -ms-flex-align: flex-start;
+        align-items: flex-start;
       }
 
-      .c18::-moz-placeholder {
-        color: #8e8ea9;
-        opacity: 1;
-      }
-
-      .c18:-ms-input-placeholder {
-        color: #8e8ea9;
-        opacity: 1;
-      }
-
-      .c18::placeholder {
-        color: #8e8ea9;
-        opacity: 1;
-      }
-
-      .c18[aria-disabled='true'] {
-        background: inherit;
-        color: inherit;
-      }
-
-      .c18:focus {
-        outline: none;
-        box-shadow: none;
+      .c29 * {
+        cursor: pointer;
       }
 
       .c19 {
         border: none;
         border-radius: 4px;
+        padding-bottom: 0.65625rem;
         padding-left: 16px;
-        padding-right: 0;
+        padding-right: 16px;
+        padding-top: 0.65625rem;
         color: #32324d;
         font-weight: 400;
         font-size: 0.875rem;
         display: block;
         width: 100%;
+        background: inherit;
       }
 
       .c19::-webkit-input-placeholder {
@@ -430,7 +479,6 @@ describe('ADMIN | PAGES | AUTH | BaseLogin', () => {
       }
 
       .c19[aria-disabled='true'] {
-        background: inherit;
         color: inherit;
       }
 
@@ -439,11 +487,54 @@ describe('ADMIN | PAGES | AUTH | BaseLogin', () => {
         box-shadow: none;
       }
 
-      .c17 {
+      .c20 {
+        border: none;
+        border-radius: 4px;
+        padding-bottom: 0.65625rem;
+        padding-left: 16px;
+        padding-right: 0;
+        padding-top: 0.65625rem;
+        color: #32324d;
+        font-weight: 400;
+        font-size: 0.875rem;
+        display: block;
+        width: 100%;
+        background: inherit;
+      }
+
+      .c20::-webkit-input-placeholder {
+        color: #8e8ea9;
+        opacity: 1;
+      }
+
+      .c20::-moz-placeholder {
+        color: #8e8ea9;
+        opacity: 1;
+      }
+
+      .c20:-ms-input-placeholder {
+        color: #8e8ea9;
+        opacity: 1;
+      }
+
+      .c20::placeholder {
+        color: #8e8ea9;
+        opacity: 1;
+      }
+
+      .c20[aria-disabled='true'] {
+        color: inherit;
+      }
+
+      .c20:focus {
+        outline: none;
+        box-shadow: none;
+      }
+
+      .c18 {
         border: 1px solid #dcdce4;
         border-radius: 4px;
         background: #ffffff;
-        height: 2.5rem;
         outline: none;
         box-shadow: 0;
         -webkit-transition-property: border-color,box-shadow,fill;
@@ -452,169 +543,90 @@ describe('ADMIN | PAGES | AUTH | BaseLogin', () => {
         transition-duration: 0.2s;
       }
 
-      .c17:focus-within {
+      .c18:focus-within {
         border: 1px solid #4945ff;
         box-shadow: #4945ff 0px 0px 0px 2px;
       }
 
-      .c11 {
-        display: -webkit-box;
-        display: -webkit-flex;
-        display: -ms-flexbox;
-        display: flex;
-        -webkit-flex-direction: column;
-        -ms-flex-direction: column;
-        flex-direction: column;
-      }
-
-      .c11 > * {
-        margin-top: 0;
-        margin-bottom: 0;
-      }
-
-      .c11 > * + * {
-        margin-top: 4px;
-      }
-
-      .c27 {
-        margin: 0;
-        height: 18px;
-        min-width: 18px;
-        border-radius: 4px;
-        border: 1px solid #c0c0cf;
-        -webkit-appearance: none;
-        background-color: #ffffff;
-        cursor: pointer;
-      }
-
-      .c27:checked {
-        background-color: #4945ff;
-        border: 1px solid #4945ff;
-      }
-
-      .c27:checked:after {
-        content: '';
-        display: block;
-        position: relative;
-        background: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAiIGhlaWdodD0iOCIgdmlld0JveD0iMCAwIDEwIDgiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHBhdGgKICAgIGQ9Ik04LjU1MzIzIDAuMzk2OTczQzguNjMxMzUgMC4zMTYzNTUgOC43NjA1MSAwLjMxNTgxMSA4LjgzOTMxIDAuMzk1NzY4TDkuODYyNTYgMS40MzQwN0M5LjkzODkzIDEuNTExNTcgOS45MzkzNSAxLjYzNTkgOS44NjM0OSAxLjcxMzlMNC4wNjQwMSA3LjY3NzI0QzMuOTg1OSA3Ljc1NzU1IDMuODU3MDcgNy43NTgwNSAzLjc3ODM0IDcuNjc4MzRMMC4xMzg2NiAzLjk5MzMzQzAuMDYxNzc5OCAzLjkxNTQ5IDAuMDYxNzEwMiAzLjc5MDMyIDAuMTM4NTA0IDMuNzEyNEwxLjE2MjEzIDIuNjczNzJDMS4yNDAzOCAyLjU5NDMyIDEuMzY4NDMgMi41OTQyMiAxLjQ0NjggMi42NzM0OEwzLjkyMTc0IDUuMTc2NDdMOC41NTMyMyAwLjM5Njk3M1oiCiAgICBmaWxsPSJ3aGl0ZSIKICAvPgo8L3N2Zz4=) no-repeat no-repeat center center;
-        width: 10px;
-        height: 10px;
-        left: 50%;
-        top: 50%;
-        -webkit-transform: translateX(-50%) translateY(-50%);
-        -ms-transform: translateX(-50%) translateY(-50%);
-        transform: translateX(-50%) translateY(-50%);
-      }
-
-      .c27:checked:disabled:after {
-        background: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAiIGhlaWdodD0iOCIgdmlld0JveD0iMCAwIDEwIDgiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHBhdGgKICAgIGQ9Ik04LjU1MzIzIDAuMzk2OTczQzguNjMxMzUgMC4zMTYzNTUgOC43NjA1MSAwLjMxNTgxMSA4LjgzOTMxIDAuMzk1NzY4TDkuODYyNTYgMS40MzQwN0M5LjkzODkzIDEuNTExNTcgOS45MzkzNSAxLjYzNTkgOS44NjM0OSAxLjcxMzlMNC4wNjQwMSA3LjY3NzI0QzMuOTg1OSA3Ljc1NzU1IDMuODU3MDcgNy43NTgwNSAzLjc3ODM0IDcuNjc4MzRMMC4xMzg2NiAzLjk5MzMzQzAuMDYxNzc5OCAzLjkxNTQ5IDAuMDYxNzEwMiAzLjc5MDMyIDAuMTM4NTA0IDMuNzEyNEwxLjE2MjEzIDIuNjczNzJDMS4yNDAzOCAyLjU5NDMyIDEuMzY4NDMgMi41OTQyMiAxLjQ0NjggMi42NzM0OEwzLjkyMTc0IDUuMTc2NDdMOC41NTMyMyAwLjM5Njk3M1oiCiAgICBmaWxsPSIjOEU4RUE5IgogIC8+Cjwvc3ZnPg==) no-repeat no-repeat center center;
-      }
-
-      .c27:disabled {
-        background-color: #dcdce4;
-        border: 1px solid #c0c0cf;
-      }
-
-      .c27:indeterminate {
-        background-color: #4945ff;
-        border: 1px solid #4945ff;
-      }
-
-      .c27:indeterminate:after {
-        content: '';
-        display: block;
-        position: relative;
-        color: white;
-        height: 2px;
-        width: 10px;
-        background-color: #ffffff;
-        left: 50%;
-        top: 50%;
-        -webkit-transform: translateX(-50%) translateY(-50%);
-        -ms-transform: translateX(-50%) translateY(-50%);
-        transform: translateX(-50%) translateY(-50%);
-      }
-
-      .c27:indeterminate:disabled {
-        background-color: #dcdce4;
-        border: 1px solid #c0c0cf;
-      }
-
-      .c27:indeterminate:disabled:after {
-        background-color: #8e8ea9;
-      }
-
-      .c28 {
-        padding-left: 8px;
-      }
-
-      .c24 {
-        display: -webkit-box;
-        display: -webkit-flex;
-        display: -ms-flexbox;
-        display: flex;
-        -webkit-flex-direction: column;
-        -ms-flex-direction: column;
-        flex-direction: column;
-      }
-
-      .c24 > * {
-        margin-top: 0;
-        margin-bottom: 0;
-      }
-
-      .c24 > * + * {
-        margin-top: 4px;
-      }
-
       .c25 {
-        color: #32324d;
+        font-size: 1.6rem;
+        padding: 0;
+      }
+
+      .c0:focus-visible {
+        outline: none;
+      }
+
+      .c40 {
         font-size: 0.875rem;
         line-height: 1.43;
+        color: #4945ff;
       }
 
-      .c26 {
-        display: -webkit-box;
-        display: -webkit-flex;
-        display: -ms-flexbox;
-        display: flex;
-        -webkit-align-items: flex-start;
-        -webkit-box-align: flex-start;
-        -ms-flex-align: flex-start;
-        align-items: flex-start;
-      }
-
-      .c26 * {
-        cursor: pointer;
-      }
-
-      .c7 {
-        color: #32324d;
-        font-weight: 600;
-        font-size: 2rem;
-        line-height: 1.25;
-      }
-
-      .c9 {
-        color: #666687;
-        font-size: 1rem;
-        line-height: 1.5;
-      }
-
-      .c22 {
-        border: none;
-        background: transparent;
-        font-size: 1.6rem;
-        width: auto;
-        padding: 0;
-        display: -webkit-box;
-        display: -webkit-flex;
-        display: -ms-flexbox;
-        display: flex;
+      .c39 {
+        display: -webkit-inline-box;
+        display: -webkit-inline-flex;
+        display: -ms-inline-flexbox;
+        display: inline-flex;
         -webkit-align-items: center;
         -webkit-box-align: center;
         -ms-flex-align: center;
         align-items: center;
+        -webkit-text-decoration: none;
+        text-decoration: none;
+        gap: 8px;
+        position: relative;
+        outline: none;
+      }
+
+      .c39 svg {
+        font-size: 0.625rem;
+      }
+
+      .c39 svg path {
+        fill: #4945ff;
+      }
+
+      .c39:hover {
+        color: #7b79ff;
+      }
+
+      .c39:active {
+        color: #271fe0;
+      }
+
+      .c39:after {
+        -webkit-transition-property: all;
+        transition-property: all;
+        -webkit-transition-duration: 0.2s;
+        transition-duration: 0.2s;
+        border-radius: 8px;
+        content: '';
+        position: absolute;
+        top: -4px;
+        bottom: -4px;
+        left: -4px;
+        right: -4px;
+        border: 2px solid transparent;
+      }
+
+      .c39:focus-visible {
+        outline: none;
+      }
+
+      .c39:focus-visible:after {
+        border-radius: 8px;
+        content: '';
+        position: absolute;
+        top: -5px;
+        bottom: -5px;
+        left: -5px;
+        right: -5px;
+        border: 2px solid #4945ff;
+      }
+
+      .c5 {
+        height: 4.5rem;
       }
 
       .c2 {
@@ -628,20 +640,16 @@ describe('ADMIN | PAGES | AUTH | BaseLogin', () => {
         flex-direction: column;
       }
 
-      .c5 {
-        height: 4.5rem;
-      }
-
-      .c23 svg {
+      .c26 svg {
         height: 1rem;
         width: 1rem;
       }
 
-      .c23 svg path {
+      .c26 svg path {
         fill: #666687;
       }
 
-      .c20::-ms-reveal {
+      .c21::-ms-reveal {
         display: none;
       }
 
@@ -665,58 +673,57 @@ describe('ADMIN | PAGES | AUTH | BaseLogin', () => {
                 alt=""
                 aria-hidden="true"
                 class="c5"
+                src="customAuthLogo.png"
               />
               <div
                 class="c6"
               >
                 <h1
-                  class="c7"
+                  class="c7 c8"
                 >
                   Welcome!
                 </h1>
               </div>
               <div
-                class="c8"
+                class="c9"
               >
                 <span
-                  class="c9"
+                  class="c7 c10"
                 >
                   Log in to your Strapi account
                 </span>
               </div>
             </div>
             <div
-              class="c10"
+              class="c11"
             >
               <div>
-                <div>
+                <div
+                  class=""
+                >
                   <div
-                    class="c11"
+                    class="c12"
                   >
-                    <div
-                      class="c12"
+                    <label
+                      class="c7 c13 c14"
+                      for=":r0:"
                     >
-                      <label
-                        class="c13"
-                        for="textinput-1"
-                        required=""
+                      Email
+                      <span
+                        class="c7 c15 c16"
                       >
-                        Email
-                        <span
-                          class="c14 c15"
-                        >
-                          *
-                        </span>
-                      </label>
-                    </div>
+                        *
+                      </span>
+                    </label>
                     <div
-                      class="c16 c17"
+                      class="c17 c18"
                     >
                       <input
                         aria-disabled="false"
                         aria-invalid="false"
-                        class="c18"
-                        id="textinput-1"
+                        aria-required="true"
+                        class="c19"
+                        id=":r0:"
                         name="email"
                         placeholder="kai@doe.com"
                         value=""
@@ -726,55 +733,59 @@ describe('ADMIN | PAGES | AUTH | BaseLogin', () => {
                 </div>
               </div>
               <div>
-                <div>
+                <div
+                  class=""
+                >
                   <div
-                    class="c11"
+                    class="c12"
                   >
-                    <div
-                      class="c12"
+                    <label
+                      class="c7 c13 c14"
+                      for=":r2:"
                     >
-                      <label
-                        class="c13"
-                        for="textinput-2"
-                        required=""
+                      Password
+                      <span
+                        class="c7 c15 c16"
                       >
-                        Password
-                        <span
-                          class="c14 c15"
-                        >
-                          *
-                        </span>
-                      </label>
-                    </div>
+                        *
+                      </span>
+                    </label>
                     <div
-                      class="c16 c17"
+                      class="c17 c18"
                     >
                       <input
                         aria-disabled="false"
                         aria-invalid="false"
-                        class="c19 c20"
-                        id="textinput-2"
+                        aria-required="true"
+                        class="c20 c21"
+                        id=":r2:"
                         name="password"
                         type="password"
                         value=""
                       />
                       <div
-                        class="c21"
+                        class="c22"
                       >
                         <button
-                          aria-label="Hide password"
-                          class="c22 c23"
+                          class="c23 c24 c25 c26"
                           type="button"
                         >
+                          <span
+                            class="c27"
+                          >
+                            Hide password
+                          </span>
                           <svg
+                            aria-hidden="true"
                             fill="none"
-                            height="1em"
+                            focusable="false"
+                            height="1rem"
                             viewBox="0 0 24 24"
-                            width="1em"
+                            width="1rem"
                             xmlns="http://www.w3.org/2000/svg"
                           >
                             <path
-                              d="M4.048 6.875L2.103 4.93a1 1 0 111.414-1.415l16.966 16.966a1 1 0 11-1.414 1.415l-2.686-2.686a12.247 12.247 0 01-4.383.788c-3.573 0-6.559-1.425-8.962-3.783a15.842 15.842 0 01-2.116-2.568 11.096 11.096 0 01-.711-1.211 1.145 1.145 0 010-.875c.124-.258.36-.68.711-1.211.58-.876 1.283-1.75 2.116-2.569.326-.32.663-.622 1.01-.906zm10.539 10.539l-1.551-1.551a4.005 4.005 0 01-4.9-4.9L6.584 9.411a6 6 0 008.002 8.002zM7.617 4.787A12.248 12.248 0 0112 3.998c3.572 0 6.559 1.426 8.961 3.783a15.845 15.845 0 012.117 2.569c.351.532.587.954.711 1.211.116.242.115.636 0 .875-.124.257-.36.68-.711 1.211-.58.876-1.283 1.75-2.117 2.568-.325.32-.662.623-1.01.907l-2.536-2.537a6 6 0 00-8.002-8.002L7.617 4.787zm3.347 3.347A4.005 4.005 0 0116 11.998c0 .359-.047.706-.136 1.037l-4.9-4.901z"
+                              d="M4.048 6.875 2.103 4.93a1 1 0 1 1 1.414-1.415l16.966 16.966a1 1 0 1 1-1.414 1.415l-2.686-2.686a12.247 12.247 0 0 1-4.383.788c-3.573 0-6.559-1.425-8.962-3.783a15.842 15.842 0 0 1-2.116-2.568 11.096 11.096 0 0 1-.711-1.211 1.145 1.145 0 0 1 0-.875c.124-.258.36-.68.711-1.211.58-.876 1.283-1.75 2.116-2.569.326-.32.663-.622 1.01-.906Zm10.539 10.539-1.551-1.551a4.005 4.005 0 0 1-4.9-4.9L6.584 9.411a6 6 0 0 0 8.002 8.002ZM7.617 4.787A12.248 12.248 0 0 1 12 3.998c3.572 0 6.559 1.426 8.961 3.783a15.845 15.845 0 0 1 2.117 2.569c.351.532.587.954.711 1.211.116.242.115.636 0 .875-.124.257-.36.68-.711 1.211-.58.876-1.283 1.75-2.117 2.568-.325.32-.662.623-1.01.907l-2.536-2.537a6 6 0 0 0-8.002-8.002L7.617 4.787Zm3.347 3.347A4.005 4.005 0 0 1 16 11.998c0 .359-.047.706-.136 1.037l-4.9-4.901Z"
                               fill="#212134"
                             />
                           </svg>
@@ -784,22 +795,28 @@ describe('ADMIN | PAGES | AUTH | BaseLogin', () => {
                   </div>
                 </div>
               </div>
-              <div>
+              <div
+                class=""
+              >
                 <div
-                  class="c24"
+                  class="c12"
                 >
                   <label
-                    class="c25 c26"
+                    class="c7 c28 c29"
                   >
-                    <input
-                      aria-label="rememberMe"
-                      class="c27"
-                      id="checkbox-1"
-                      name="rememberMe"
-                      type="checkbox"
-                    />
                     <div
-                      class="c28"
+                      class=""
+                    >
+                      <input
+                        aria-label="rememberMe"
+                        class="c30"
+                        id=":r4:"
+                        name="rememberMe"
+                        type="checkbox"
+                      />
+                    </div>
+                    <div
+                      class="c31"
                     >
                       Remember me
                     </div>
@@ -808,11 +825,11 @@ describe('ADMIN | PAGES | AUTH | BaseLogin', () => {
               </div>
               <button
                 aria-disabled="false"
-                class="c29 c30"
+                class="c32 c33 c34 c35"
                 type="submit"
               >
                 <span
-                  class="c31 c32"
+                  class="c7 c36"
                 >
                   Login
                 </span>
@@ -821,17 +838,17 @@ describe('ADMIN | PAGES | AUTH | BaseLogin', () => {
           </form>
         </div>
         <div
-          class="c33"
+          class="c37"
         >
           <div
-            class="c34"
+            class="c38"
           >
             <a
-              class="c35"
+              class="c39"
               href="/auth/forgot-password"
             >
               <span
-                class="c36"
+                class="c40"
               >
                 Forgot your password?
               </span>

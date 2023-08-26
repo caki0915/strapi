@@ -1,68 +1,91 @@
-/**
- *
- * SettingsPage
- *
- */
+import * as React from 'react';
 
-// NOTE TO PLUGINS DEVELOPERS:
-// If you modify this file you also need to update the documentation accordingly
-// Here's the file: strapi/docs/3.0.0-beta.x/plugin-development/frontend-settings-api.md
-// IF THE DOC IS NOT UPDATED THE PULL REQUEST WILL NOT BE MERGED
-
-import React, { memo, useMemo } from 'react';
+import { Layout } from '@strapi/design-system';
 import { LoadingIndicatorPage, useStrapiApp } from '@strapi/helper-plugin';
-import { Switch, Redirect, Route, useParams } from 'react-router-dom';
-import { Layout } from '@strapi/design-system/Layout';
-import { useIntl } from 'react-intl';
 import { Helmet } from 'react-helmet';
-import { useSettingsMenu } from '../../hooks';
-import { createRoute, makeUniqueRoutes } from '../../utils';
-import ApplicationInfosPage from './pages/ApplicationInfosPage';
-import { createSectionsRoutes, routes } from './utils';
-import SettingsNav from './components/SettingsNav';
+import { useIntl } from 'react-intl';
+import { Redirect, Route, Switch, useParams } from 'react-router-dom';
 
-function SettingsPage() {
+import { useSettingsMenu } from '../../hooks';
+import { useEnterprise } from '../../hooks/useEnterprise';
+
+import SettingsNav from './components/SettingsNav';
+import { SETTINGS_ROUTES_CE } from './constants';
+import ApplicationInfosPage from './pages/ApplicationInfosPage';
+
+export function SettingsPage() {
   const { settingId } = useParams();
   const { settings } = useStrapiApp();
   const { formatMessage } = useIntl();
   const { isLoading, menu } = useSettingsMenu();
-
-  // Creates the admin routes
-  const adminRoutes = useMemo(() => {
-    return makeUniqueRoutes(
-      routes.map(({ to, Component, exact }) => createRoute(Component, to, exact))
-    );
-  }, []);
-
-  const pluginsRoutes = createSectionsRoutes(settings);
-
-  // Since the useSettingsMenu hook can make API calls in order to check the links permissions
-  // We need to add a loading state to prevent redirecting the user while permissions are being checked
-  if (isLoading) {
-    return <LoadingIndicatorPage />;
-  }
+  const routes = useEnterprise(
+    SETTINGS_ROUTES_CE,
+    async () =>
+      (await import('../../../../ee/admin/pages/SettingsPage/constants')).SETTINGS_ROUTES_EE,
+    {
+      combine(ceRoutes, eeRoutes) {
+        return [...ceRoutes, ...eeRoutes];
+      },
+      defaultValue: [],
+    }
+  );
 
   if (!settingId) {
     return <Redirect to="/settings/application-infos" />;
   }
 
-  const settingTitle = formatMessage({
-    id: 'app.components.LeftMenuLinkContainer.settings',
-    defaultMessage: 'Settings',
-  });
-
   return (
     <Layout sideNav={<SettingsNav menu={menu} />}>
-      <Helmet title={settingTitle} />
+      <Helmet
+        title={formatMessage({
+          id: 'global.settings',
+          defaultMessage: 'Settings',
+        })}
+      />
 
-      <Switch>
-        <Route path="/settings/application-infos" component={ApplicationInfosPage} exact />
-        {adminRoutes}
-        {pluginsRoutes}
-      </Switch>
+      {isLoading ? (
+        <LoadingIndicatorPage />
+      ) : (
+        <Switch>
+          <Route
+            path="/settings/application-infos"
+            render={() => (
+              <React.Suspense fallback={<LoadingIndicatorPage />}>
+                <ApplicationInfosPage />
+              </React.Suspense>
+            )}
+            exact
+          />
+
+          {routes.map(({ path, Component }) => (
+            <Route
+              key={path}
+              path={path}
+              render={() => (
+                <React.Suspense fallback={<LoadingIndicatorPage />}>
+                  <Component />
+                </React.Suspense>
+              )}
+              exact
+            />
+          ))}
+
+          {Object.values(settings).flatMap((section) =>
+            section.links.map(({ Component, to, exact }) => (
+              <Route
+                render={() => (
+                  <React.Suspense fallback={<LoadingIndicatorPage />}>
+                    <Component />
+                  </React.Suspense>
+                )}
+                key={to}
+                path={to}
+                exact={exact || false}
+              />
+            ))
+          )}
+        </Switch>
+      )}
     </Layout>
   );
 }
-
-export default memo(SettingsPage);
-export { SettingsPage };

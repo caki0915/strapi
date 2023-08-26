@@ -14,36 +14,36 @@ const statuses = {
 
 const helpers = {
   hasTable(schema, tableName) {
-    return schema.tables.findIndex(table => table.name === tableName) !== -1;
+    return schema.tables.findIndex((table) => table.name === tableName) !== -1;
   },
   findTable(schema, tableName) {
-    return schema.tables.find(table => table.name === tableName);
+    return schema.tables.find((table) => table.name === tableName);
   },
 
   hasColumn(table, columnName) {
-    return table.columns.findIndex(column => column.name === columnName) !== -1;
+    return table.columns.findIndex((column) => column.name === columnName) !== -1;
   },
   findColumn(table, columnName) {
-    return table.columns.find(column => column.name === columnName);
+    return table.columns.find((column) => column.name === columnName);
   },
 
   hasIndex(table, columnName) {
-    return table.indexes.findIndex(column => column.name === columnName) !== -1;
+    return table.indexes.findIndex((column) => column.name === columnName) !== -1;
   },
   findIndex(table, columnName) {
-    return table.indexes.find(column => column.name === columnName);
+    return table.indexes.find((column) => column.name === columnName);
   },
 
   hasForeignKey(table, columnName) {
-    return table.foreignKeys.findIndex(column => column.name === columnName) !== -1;
+    return table.foreignKeys.findIndex((column) => column.name === columnName) !== -1;
   },
   findForeignKey(table, columnName) {
-    return table.foreignKeys.find(column => column.name === columnName);
+    return table.foreignKeys.find((column) => column.name === columnName);
   },
 };
 
-module.exports = db => {
-  const hasChangedStatus = diff => diff.status === statuses.CHANGED;
+module.exports = (db) => {
+  const hasChangedStatus = (diff) => diff.status === statuses.CHANGED;
 
   /**
    * Compares two indexes info
@@ -53,7 +53,7 @@ module.exports = db => {
   const diffIndexes = (oldIndex, index) => {
     const changes = [];
 
-    if (_.difference(oldIndex.columns, index.columns).length > 0) {
+    if (!_.isEqual(oldIndex.columns, index.columns)) {
       changes.push('columns');
     }
 
@@ -117,7 +117,7 @@ module.exports = db => {
 
   const diffDefault = (oldColumn, column) => {
     const oldDefaultTo = oldColumn.defaultTo;
-    const defaultTo = column.defaultTo;
+    const { defaultTo } = column;
 
     if (oldDefaultTo === null || _.toLower(oldDefaultTo) === 'null') {
       return _.isNil(defaultTo) || _.toLower(defaultTo) === 'null';
@@ -197,7 +197,7 @@ module.exports = db => {
       }
     }
 
-    const hasChanged = [addedColumns, updatedColumns, removedColumns].some(arr => arr.length > 0);
+    const hasChanged = [addedColumns, updatedColumns, removedColumns].some((arr) => arr.length > 0);
 
     return {
       status: hasChanged ? statuses.CHANGED : statuses.UNCHANGED,
@@ -237,7 +237,7 @@ module.exports = db => {
       }
     }
 
-    const hasChanged = [addedIndexes, updatedIndexes, removedIndexes].some(arr => arr.length > 0);
+    const hasChanged = [addedIndexes, updatedIndexes, removedIndexes].some((arr) => arr.length > 0);
 
     return {
       status: hasChanged ? statuses.CHANGED : statuses.UNCHANGED,
@@ -290,7 +290,7 @@ module.exports = db => {
     }
 
     const hasChanged = [addedForeignKeys, updatedForeignKeys, removedForeignKeys].some(
-      arr => arr.length > 0
+      (arr) => arr.length > 0
     );
 
     return {
@@ -322,7 +322,7 @@ module.exports = db => {
     };
   };
 
-  const diffSchemas = (srcSchema, destSchema) => {
+  const diffSchemas = async (srcSchema, destSchema) => {
     const addedTables = [];
     const updatedTables = [];
     const unchangedTables = [];
@@ -344,16 +344,41 @@ module.exports = db => {
       }
     }
 
+    const parsePersistedTable = (persistedTable) => {
+      if (typeof persistedTable === 'string') {
+        return persistedTable;
+      }
+      return persistedTable.name;
+    };
+
+    const persistedTables = helpers.hasTable(srcSchema, 'strapi_core_store_settings')
+      ? (await strapi.store.get({
+          type: 'core',
+          key: 'persisted_tables',
+        })) ?? []
+      : [];
+
+    const reservedTables = [...RESERVED_TABLE_NAMES, ...persistedTables.map(parsePersistedTable)];
+
     for (const srcTable of srcSchema.tables) {
-      if (
-        !helpers.hasTable(destSchema, srcTable.name) &&
-        !RESERVED_TABLE_NAMES.includes(srcTable.name)
-      ) {
-        removedTables.push(srcTable);
+      if (!helpers.hasTable(destSchema, srcTable.name) && !reservedTables.includes(srcTable.name)) {
+        const dependencies = persistedTables
+          .filter((table) => {
+            const dependsOn = table?.dependsOn;
+            if (!_.isArray(dependsOn)) return;
+            return dependsOn.some((table) => table.name === srcTable.name);
+          })
+          .map((dependsOnTable) => {
+            return srcSchema.tables.find((srcTable) => srcTable.name === dependsOnTable.name);
+          })
+          // In case the table is not found, filter undefined values
+          .filter((table) => !_.isNil(table));
+
+        removedTables.push(srcTable, ...dependencies);
       }
     }
 
-    const hasChanged = [addedTables, updatedTables, removedTables].some(arr => arr.length > 0);
+    const hasChanged = [addedTables, updatedTables, removedTables].some((arr) => arr.length > 0);
 
     return {
       status: hasChanged ? statuses.CHANGED : statuses.UNCHANGED,

@@ -1,14 +1,16 @@
 import produce from 'immer';
 import set from 'lodash/set';
+
 import pluginId from '../pluginId';
-import { RESOLVE_LOCALES, ADD_LOCALE, DELETE_LOCALE, UPDATE_LOCALE } from './constants';
+
+import { ADD_LOCALE, DELETE_LOCALE, RESOLVE_LOCALES, UPDATE_LOCALE } from './constants';
 
 export const initialState = {
   isLoading: true,
   locales: [],
 };
 
-const localeReducer = produce((draftState = initialState, action) => {
+const localeReducer = produce((draftState = initialState, action = {}) => {
   switch (action.type) {
     case RESOLVE_LOCALES: {
       draftState.isLoading = false;
@@ -18,7 +20,7 @@ const localeReducer = produce((draftState = initialState, action) => {
 
     case ADD_LOCALE: {
       if (action.newLocale.isDefault) {
-        draftState.locales.forEach(locale => {
+        draftState.locales.forEach((locale) => {
           locale.isDefault = false;
         });
       }
@@ -28,7 +30,7 @@ const localeReducer = produce((draftState = initialState, action) => {
     }
 
     case DELETE_LOCALE: {
-      const locales = draftState.locales.filter(locale => locale.id !== action.id);
+      const locales = draftState.locales.filter((locale) => locale.id !== action.id);
 
       set(draftState, 'locales', locales);
       break;
@@ -36,13 +38,13 @@ const localeReducer = produce((draftState = initialState, action) => {
 
     case UPDATE_LOCALE: {
       if (action.editedLocale.isDefault) {
-        draftState.locales.forEach(locale => {
+        draftState.locales.forEach((locale) => {
           locale.isDefault = false;
         });
       }
 
       const indexToEdit = draftState.locales.findIndex(
-        locale => locale.id === action.editedLocale.id
+        (locale) => locale.id === action.editedLocale.id
       );
 
       set(draftState.locales, indexToEdit, action.editedLocale);

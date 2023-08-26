@@ -9,7 +9,7 @@ const { formatAttributes, replaceTemporaryUIDs } = require('../utils/attributes'
 const createBuilder = require('./schema-builder');
 const { coreUids, pluginsUids } = require('./constants');
 
-const isContentTypeVisible = model =>
+const isContentTypeVisible = (model) =>
   getOr(true, 'pluginOptions.content-type-builder.visible', model) === true;
 
 const getRestrictRelationsTo = (contentType = {}) => {
@@ -34,19 +34,19 @@ const getRestrictRelationsTo = (contentType = {}) => {
  * Format a contentType info to be used by the front-end
  * @param {Object} contentType
  */
-const formatContentType = contentType => {
-  const { uid, kind, modelName, plugin, collectionName, info, options } = contentType;
+const formatContentType = (contentType) => {
+  const { uid, kind, modelName, plugin, collectionName, info } = contentType;
 
   return {
     uid,
     plugin,
     apiID: modelName,
     schema: {
+      ...contentTypesUtils.getOptions(contentType),
       displayName: info.displayName,
       singularName: info.singularName,
       pluralName: info.pluralName,
       description: _.get(info, 'description', ''),
-      draftAndPublish: contentTypesUtils.hasDraftAndPublish({ options }),
       pluginOptions: contentType.pluginOptions,
       kind: kind || 'collectionType',
       collectionName,
@@ -57,7 +57,7 @@ const formatContentType = contentType => {
   };
 };
 
-const createContentTypes = async contentTypes => {
+const createContentTypes = async (contentTypes) => {
   const builder = createBuilder();
   const createdContentTypes = [];
 
@@ -87,8 +87,8 @@ const createContentType = async ({ contentType, components = [] }, options = {})
   const newContentType = builder.createContentType(replaceTmpUIDs(contentType));
 
   // allow components to target the new contentType
-  const targetContentType = infos => {
-    Object.keys(infos.attributes).forEach(key => {
+  const targetContentType = (infos) => {
+    Object.keys(infos.attributes).forEach((key) => {
       const { target } = infos.attributes[key];
       if (target === '__contentType__') {
         infos.attributes[key].target = newContentType.uid;
@@ -98,7 +98,7 @@ const createContentType = async ({ contentType, components = [] }, options = {})
     return infos;
   };
 
-  components.forEach(component => {
+  components.forEach((component) => {
     const options = replaceTmpUIDs(targetContentType(component));
 
     if (!_.has(component, 'uid')) {
@@ -119,6 +119,8 @@ const createContentType = async ({ contentType, components = [] }, options = {})
   if (!options.defaultBuilder) {
     await builder.writeFiles();
   }
+
+  strapi.eventHub.emit('content-type.create', { contentType: newContentType });
 
   return newContentType;
 };
@@ -141,7 +143,7 @@ const generateAPI = ({ singularName, kind = 'collectionType', pluralName, displa
       bootstrapApi: true,
       attributes: [],
     },
-    { dir: strapi.dirs.root }
+    { dir: strapi.dirs.app.root }
   );
 };
 
@@ -155,8 +157,22 @@ const generateAPI = ({ singularName, kind = 'collectionType', pluralName, displa
 const editContentType = async (uid, { contentType, components = [] }) => {
   const builder = createBuilder();
 
-  const previousKind = builder.contentTypes.get(uid).schema.kind;
+  const previousSchema = builder.contentTypes.get(uid).schema;
+  const previousKind = previousSchema.kind;
   const newKind = contentType.kind || previousKind;
+
+  // Restore non-visible attributes from previous schema
+  const previousAttributes = previousSchema.attributes;
+  const prevNonVisibleAttributes = contentTypesUtils
+    .getNonVisibleAttributes(previousSchema)
+    .reduce((acc, key) => {
+      if (key in previousAttributes) {
+        acc[key] = previousAttributes[key];
+      }
+
+      return acc;
+    }, {});
+  contentType.attributes = _.merge(prevNonVisibleAttributes, contentType.attributes);
 
   if (newKind !== previousKind && newKind === 'singleType') {
     const entryCount = await strapi.query(uid).count();
@@ -175,7 +191,7 @@ const editContentType = async (uid, { contentType, components = [] }) => {
     ...replaceTmpUIDs(contentType),
   });
 
-  components.forEach(component => {
+  components.forEach((component) => {
     if (!_.has(component, 'uid')) {
       return builder.createComponent(replaceTmpUIDs(component));
     }
@@ -208,10 +224,13 @@ const editContentType = async (uid, { contentType, components = [] }) => {
   }
 
   await builder.writeFiles();
+
+  strapi.eventHub.emit('content-type.update', { contentType: updatedContentType });
+
   return updatedContentType;
 };
 
-const deleteContentTypes = async uids => {
+const deleteContentTypes = async (uids) => {
   const builder = createBuilder();
   const apiHandler = strapi.plugin('content-type-builder').service('api-handler');
 
@@ -251,6 +270,8 @@ const deleteContentType = async (uid, defaultBuilder = undefined) => {
       await apiHandler.rollback(uid);
     }
   }
+
+  strapi.eventHub.emit('content-type.delete', { contentType });
 
   return contentType;
 };

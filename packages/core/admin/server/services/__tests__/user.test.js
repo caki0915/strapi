@@ -36,6 +36,9 @@ describe('User', () => {
       const hashPassword = jest.fn(() => Promise.resolve('123456789'));
 
       global.strapi = {
+        eventHub: {
+          emit: jest.fn(),
+        },
         admin: {
           services: {
             token: { createToken },
@@ -65,6 +68,9 @@ describe('User', () => {
       const hashPassword = jest.fn(() => Promise.resolve('123456789'));
 
       global.strapi = {
+        eventHub: {
+          emit: jest.fn(),
+        },
         admin: {
           services: {
             token: { createToken },
@@ -107,6 +113,9 @@ describe('User', () => {
       const hashPassword = jest.fn(() => Promise.resolve('123456789'));
 
       global.strapi = {
+        eventHub: {
+          emit: jest.fn(),
+        },
         admin: {
           services: {
             token: { createToken },
@@ -174,6 +183,9 @@ describe('User', () => {
       const hashPassword = jest.fn(() => Promise.resolve(hash));
 
       global.strapi = {
+        eventHub: {
+          emit: jest.fn(),
+        },
         query() {
           return { update, findOne };
         },
@@ -208,6 +220,9 @@ describe('User', () => {
       const update = jest.fn(() => Promise.resolve(user));
 
       global.strapi = {
+        eventHub: {
+          emit: jest.fn(),
+        },
         query() {
           return { update, findOne };
         },
@@ -227,10 +242,22 @@ describe('User', () => {
       const userId = 1;
 
       const findOne = jest.fn(() => ({ id: userId }));
-      const update = jest.fn();
+      const update = jest.fn(() => ({
+        roles: [
+          {
+            id: 3,
+            name: 'Author',
+            description: 'Authors can manage the content they have created.',
+            code: 'strapi-author',
+          },
+        ],
+      }));
       const hashPassword = jest.fn(() => hash);
 
       global.strapi = {
+        eventHub: {
+          emit: jest.fn(),
+        },
         query() {
           return {
             findOne,
@@ -266,6 +293,9 @@ describe('User', () => {
       const getSuperAdminWithUsersCount = jest.fn(() => Promise.resolve({ id: 1, usersCount: 1 }));
 
       global.strapi = {
+        eventHub: {
+          emit: jest.fn(),
+        },
         query: () => ({ findOne }),
         admin: { services: { role: { getSuperAdminWithUsersCount } } },
       };
@@ -287,6 +317,9 @@ describe('User', () => {
       const deleteFn = jest.fn(() => user);
 
       global.strapi = {
+        eventHub: {
+          emit: jest.fn(),
+        },
         query: () => ({ findOne, delete: deleteFn }),
         admin: { services: { role: { getSuperAdminWithUsersCount } } },
       };
@@ -303,6 +336,9 @@ describe('User', () => {
       const count = jest.fn(() => Promise.resolve(2));
       const getSuperAdminWithUsersCount = jest.fn(() => Promise.resolve({ id: 1, usersCount: 2 }));
       global.strapi = {
+        eventHub: {
+          emit: jest.fn(),
+        },
         query: () => ({ count }),
         admin: { services: { role: { getSuperAdminWithUsersCount } } },
       };
@@ -327,13 +363,14 @@ describe('User', () => {
         .mockImplementationOnce(() => users[1]);
 
       global.strapi = {
+        eventHub: {
+          emit: jest.fn(),
+        },
         query: () => ({ count, delete: deleteFn }),
         admin: { services: { role: { getSuperAdminWithUsersCount } } },
       };
 
       const res = await userService.deleteByIds([2, 3]);
-
-      console.log({ res });
 
       expect(deleteFn).toHaveBeenNthCalledWith(1, { where: { id: 2 }, populate: ['roles'] });
       expect(deleteFn).toHaveBeenNthCalledWith(2, { where: { id: 3 }, populate: ['roles'] });
@@ -521,7 +558,7 @@ describe('User', () => {
 
     test('Calls udpate service', async () => {
       const findOne = jest.fn(() => Promise.resolve({ id: 1 }));
-      const updateById = jest.fn(user => Promise.resolve(user));
+      const updateById = jest.fn((user) => Promise.resolve(user));
 
       global.strapi = {
         query() {
@@ -555,7 +592,7 @@ describe('User', () => {
 
     test('Set user to active', async () => {
       const findOne = jest.fn(() => Promise.resolve({ id: 1 }));
-      const updateById = jest.fn(user => Promise.resolve(user));
+      const updateById = jest.fn((user) => Promise.resolve(user));
 
       global.strapi = {
         query() {
@@ -586,7 +623,7 @@ describe('User', () => {
 
     test('Reset registrationToken', async () => {
       const findOne = jest.fn(() => Promise.resolve({ id: 1 }));
-      const updateById = jest.fn(user => Promise.resolve(user));
+      const updateById = jest.fn((user) => Promise.resolve(user));
 
       global.strapi = {
         query() {
@@ -677,7 +714,7 @@ describe('User', () => {
 
     test.each(['abc', 'Abcd', 'Abcdefgh', 'Abcd123'])(
       'Throws on invalid password',
-      async password => {
+      async (password) => {
         const email = 'email@email.fr';
 
         const findOne = jest.fn(() => ({ id: 1 }));
@@ -699,5 +736,36 @@ describe('User', () => {
         expect(findOne).toHaveBeenCalledWith({ where: { email }, populate: ['roles'] });
       }
     );
+  });
+
+  describe('getLanguagesInUse', () => {
+    test('Returns array of language codes', () => {
+      const findMany = jest.fn(() =>
+        Promise.resolve([
+          {
+            id: 1,
+            preferedLanguage: 'en',
+          },
+          {
+            id: 2,
+            preferedLanguage: 'fr',
+          },
+          {
+            id: 3,
+            preferedLanguage: 'en',
+          },
+        ])
+      );
+
+      global.strapi = {
+        query() {
+          return {
+            findMany,
+          };
+        },
+      };
+
+      expect(userService.getLanguagesInUse()).resolves.toEqual(['en', 'fr', 'en']);
+    });
   });
 });

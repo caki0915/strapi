@@ -1,17 +1,22 @@
 import React from 'react';
+
+import {
+  BaseCheckbox,
+  Box,
+  Flex,
+  IconButton,
+  Tbody,
+  Td,
+  Tr,
+  Typography,
+} from '@strapi/design-system';
+import { onRowClick, stopPropagation } from '@strapi/helper-plugin';
+import { Pencil, Trash } from '@strapi/icons';
 import PropTypes from 'prop-types';
-import { BaseCheckbox } from '@strapi/design-system/BaseCheckbox';
-import { Box } from '@strapi/design-system/Box';
-import { IconButton } from '@strapi/design-system/IconButton';
-import { Flex } from '@strapi/design-system/Flex';
-import { Typography } from '@strapi/design-system/Typography';
-import { Tbody, Td, Tr } from '@strapi/design-system/Table';
-import Pencil from '@strapi/icons/Pencil';
-import Trash from '@strapi/icons/Trash';
-import { useHistory } from 'react-router-dom';
 import { useIntl } from 'react-intl';
-import { stopPropagation, onRowClick } from '@strapi/helper-plugin';
-import { getFullName } from '../../../../../../../utils';
+import { useHistory } from 'react-router-dom';
+
+import { getFullName } from '../../../../../../../utils/getFullName';
 
 const TableRows = ({
   canDelete,
@@ -31,8 +36,8 @@ const TableRows = ({
 
   return (
     <Tbody>
-      {rows.map(data => {
-        const isChecked = entriesToDelete.findIndex(id => id === data.id) !== -1;
+      {rows.map((data) => {
+        const isChecked = entriesToDelete.findIndex((id) => id === data.id) !== -1;
 
         return (
           <Tr
@@ -63,7 +68,7 @@ const TableRows = ({
               return (
                 <Td key={key}>
                   {typeof cellFormatter === 'function' ? (
-                    cellFormatter(data, { key, name, ...rest })
+                    cellFormatter(data, { key, name, formatMessage, ...rest })
                   ) : (
                     <Typography textColor="neutral800">{data[name] || '-'}</Typography>
                   )}
@@ -89,7 +94,7 @@ const TableRows = ({
                       <IconButton
                         onClick={() => onClickDelete(data.id)}
                         label={formatMessage(
-                          { id: 'app.component.table.delete', defaultMessage: 'Delete {target}' },
+                          { id: 'global.delete-target', defaultMessage: 'Delete {target}' },
                           { target: getFullName(data.firstname, data.lastname) }
                         )}
                         noBorder
@@ -110,8 +115,8 @@ const TableRows = ({
 TableRows.defaultProps = {
   canDelete: false,
   entriesToDelete: [],
-  onClickDelete: () => {},
-  onSelectRow: () => {},
+  onClickDelete() {},
+  onSelectRow() {},
   rows: [],
   withBulkActions: false,
   withMainAction: false,

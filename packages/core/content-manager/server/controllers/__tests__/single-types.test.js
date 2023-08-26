@@ -3,6 +3,13 @@
 const createContext = require('../../../../../../test/helpers/create-context');
 const singleTypes = require('../single-types');
 
+// Mock the populate functions
+jest.mock('../../services/utils/populate', () => ({
+  ...jest.requireActual('../../services/utils/populate'),
+  getDeepPopulate: () => ({}),
+  getQueryPopulate: async () => ({}),
+}));
+
 describe('Single Types', () => {
   test('Successfull find', async () => {
     const state = {
@@ -22,7 +29,10 @@ describe('Single Types', () => {
         read: jest.fn(() => false),
         create: jest.fn(() => false),
       },
-      buildReadQuery: jest.fn(query => query),
+      buildReadQuery: jest.fn((query) => query),
+      sanitizedQuery: {
+        read: (q) => q,
+      },
     };
 
     global.strapi = {
@@ -33,6 +43,7 @@ describe('Single Types', () => {
           },
         },
       },
+      getModel: jest.fn(),
       plugins: {
         'content-manager': {
           services: {
@@ -49,6 +60,7 @@ describe('Single Types', () => {
                 return permissionChecker;
               },
             },
+            'populate-builder': require('../../services/populate-builder')(),
           },
         },
       },
@@ -85,6 +97,7 @@ describe('Single Types', () => {
       },
       user: {
         id: 1,
+        email: 'someTestEmailString',
       },
     };
 
@@ -97,9 +110,12 @@ describe('Single Types', () => {
         update: jest.fn(() => false),
         create: jest.fn(() => false),
       },
-      sanitizeCreateInput: obj => obj,
-      sanitizeOutput: obj => obj,
-      buildReadQuery: jest.fn(query => query),
+      sanitizeCreateInput: (obj) => obj,
+      sanitizeOutput: (obj) => obj,
+      buildReadQuery: jest.fn((query) => query),
+      sanitizedQuery: {
+        update: (q) => q,
+      },
     };
 
     const createFn = jest.fn(() => ({}));
@@ -142,6 +158,7 @@ describe('Single Types', () => {
                 return permissionChecker;
               },
             },
+            'populate-builder': require('../../services/populate-builder')(),
           },
         },
       },
@@ -180,7 +197,9 @@ describe('Single Types', () => {
     );
 
     expect(sendTelemetry).toHaveBeenCalledWith('didCreateFirstContentTypeEntry', {
-      model: modelUid,
+      eventProperties: {
+        model: modelUid,
+      },
     });
   });
 
@@ -210,8 +229,11 @@ describe('Single Types', () => {
       cannot: {
         delete: jest.fn(() => false),
       },
-      sanitizeOutput: jest.fn(obj => obj),
-      buildReadQuery: jest.fn(query => query),
+      sanitizeOutput: jest.fn((obj) => obj),
+      buildReadQuery: jest.fn((query) => query),
+      sanitizedQuery: {
+        delete: (q) => q,
+      },
     };
 
     const deleteFn = jest.fn(() => ({}));
@@ -253,6 +275,7 @@ describe('Single Types', () => {
                 return permissionChecker;
               },
             },
+            'populate-builder': require('../../services/populate-builder')(),
           },
         },
       },
@@ -304,8 +327,11 @@ describe('Single Types', () => {
       cannot: {
         publish: jest.fn(() => false),
       },
-      sanitizeOutput: jest.fn(obj => obj),
-      buildReadQuery: jest.fn(query => query),
+      sanitizeOutput: jest.fn((obj) => obj),
+      buildReadQuery: jest.fn((query) => query),
+      sanitizedQuery: {
+        publish: (q) => q,
+      },
     };
 
     const publishFn = jest.fn(() => ({}));
@@ -347,6 +373,7 @@ describe('Single Types', () => {
                 return permissionChecker;
               },
             },
+            'populate-builder': require('../../services/populate-builder')(),
           },
         },
       },
@@ -367,7 +394,7 @@ describe('Single Types', () => {
 
     await singleTypes.publish(ctx);
 
-    expect(publishFn).toHaveBeenCalledWith(entity, { updatedBy: state.user.id }, modelUid);
+    expect(publishFn).toHaveBeenCalledWith(entity, modelUid, { updatedBy: state.user.id });
     expect(permissionChecker.cannot.publish).toHaveBeenCalledWith(entity);
     expect(permissionChecker.sanitizeOutput).toHaveBeenCalled();
   });
@@ -398,8 +425,11 @@ describe('Single Types', () => {
       cannot: {
         unpublish: jest.fn(() => false),
       },
-      sanitizeOutput: jest.fn(obj => obj),
-      buildReadQuery: jest.fn(query => query),
+      sanitizeOutput: jest.fn((obj) => obj),
+      buildReadQuery: jest.fn((query) => query),
+      sanitizedQuery: {
+        unpublish: (q) => q,
+      },
     };
 
     const unpublishFn = jest.fn(() => ({}));
@@ -431,8 +461,8 @@ describe('Single Types', () => {
               find() {
                 return Promise.resolve(entity);
               },
-              assocCreatorRoles(enitty) {
-                return enitty;
+              assocCreatorRoles(entity) {
+                return entity;
               },
               unpublish: unpublishFn,
             },
@@ -441,6 +471,7 @@ describe('Single Types', () => {
                 return permissionChecker;
               },
             },
+            'populate-builder': require('../../services/populate-builder')(),
           },
         },
       },
@@ -461,7 +492,7 @@ describe('Single Types', () => {
 
     await singleTypes.unpublish(ctx);
 
-    expect(unpublishFn).toHaveBeenCalledWith(entity, { updatedBy: state.user.id }, modelUid);
+    expect(unpublishFn).toHaveBeenCalledWith(entity, modelUid, { updatedBy: state.user.id });
     expect(permissionChecker.cannot.unpublish).toHaveBeenCalledWith(entity);
     expect(permissionChecker.sanitizeOutput).toHaveBeenCalled();
   });

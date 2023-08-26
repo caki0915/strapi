@@ -1,7 +1,8 @@
 import React from 'react';
+
+import { Button } from '@strapi/design-system';
+import { Cog } from '@strapi/icons';
 import PropTypes from 'prop-types';
-import Cog from '@strapi/icons/Cog';
-import { Button } from '@strapi/design-system/Button';
 import { useIntl } from 'react-intl';
 import styled from 'styled-components';
 
@@ -31,7 +32,7 @@ const ConditionsButton = ({ onClick, className, hasConditions, variant }) => {
     <Wrapper hasConditions={hasConditions} className={className}>
       <Button variant={variant} startIcon={<Cog />} onClick={onClick}>
         {formatMessage({
-          id: 'app.components.LeftMenuLinkContainer.settings',
+          id: 'global.settings',
           defaultMessage: 'Settings',
         })}
       </Button>

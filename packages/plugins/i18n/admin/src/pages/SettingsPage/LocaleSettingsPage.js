@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
+
 import PropTypes from 'prop-types';
+
 import LocaleList from '../../components/LocaleList';
 
 const LocaleSettingsPage = ({
@@ -11,7 +13,7 @@ const LocaleSettingsPage = ({
   const [isOpenedCreateModal, setIsOpenedCreateModal] = useState(false);
 
   const handleToggleModalCreate = canCreateLocale
-    ? () => setIsOpenedCreateModal(s => !s)
+    ? () => setIsOpenedCreateModal((s) => !s)
     : undefined;
 
   return canReadLocale ? (

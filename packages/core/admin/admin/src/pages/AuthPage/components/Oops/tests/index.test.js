@@ -1,16 +1,22 @@
 import React from 'react';
+
+import { lightTheme, ThemeProvider } from '@strapi/design-system';
 import { render } from '@testing-library/react';
-import { ThemeProvider } from '@strapi/design-system/ThemeProvider';
-import { lightTheme } from '@strapi/design-system/themes';
-import { Router } from 'react-router-dom';
 import { createMemoryHistory } from 'history';
 import { IntlProvider } from 'react-intl';
+import { Router } from 'react-router-dom';
+
 import Oops from '..';
 
 jest.mock('../../../../../components/LocalesProvider/useLocalesProvider', () => () => ({
-  changeLocale: () => {},
-  localeNames: ['en'],
+  changeLocale() {},
+  localeNames: { en: 'English' },
   messages: ['test'],
+}));
+jest.mock('../../../../../hooks/useConfigurations', () => () => ({
+  logos: {
+    auth: { custom: 'customAuthLogo.png', default: 'defaultAuthLogo.png' },
+  },
 }));
 
 describe('ADMIN | PAGES | AUTH | Oops', () => {
@@ -27,17 +33,57 @@ describe('ADMIN | PAGES | AUTH | Oops', () => {
     );
 
     expect(container.firstChild).toMatchInlineSnapshot(`
+      .c9 {
+        font-size: 0.875rem;
+        line-height: 1.43;
+        display: block;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        color: #32324d;
+      }
+
+      .c21 {
+        font-weight: 600;
+        font-size: 2rem;
+        line-height: 1.25;
+        color: #32324d;
+      }
+
+      .c22 {
+        font-size: 0.875rem;
+        line-height: 1.43;
+        color: #32324d;
+      }
+
       .c1 {
         padding-top: 24px;
         padding-right: 40px;
       }
 
-      .c9 {
-        padding-top: 64px;
+      .c3 {
+        background: #ffffff;
+        padding-right: 12px;
+        padding-left: 12px;
+        border-radius: 4px;
+        position: relative;
+        overflow: hidden;
+        width: 100%;
+        cursor: default;
+      }
+
+      .c6 {
+        -webkit-flex: 1;
+        -ms-flex: 1;
+        flex: 1;
+      }
+
+      .c13 {
+        padding-top: 8px;
         padding-bottom: 64px;
       }
 
-      .c11 {
+      .c15 {
         background: #ffffff;
         padding-top: 48px;
         padding-right: 56px;
@@ -47,16 +93,20 @@ describe('ADMIN | PAGES | AUTH | Oops', () => {
         box-shadow: 0px 1px 4px rgba(33,33,52,0.1);
       }
 
-      .c16 {
+      .c20 {
         padding-top: 24px;
         padding-bottom: 32px;
       }
 
-      .c19 {
+      .c23 {
         padding-top: 16px;
       }
 
       .c0 {
+        -webkit-align-items: center;
+        -webkit-box-align: center;
+        -ms-flex-align: center;
+        align-items: center;
         display: -webkit-box;
         display: -webkit-flex;
         display: -ms-flexbox;
@@ -68,13 +118,28 @@ describe('ADMIN | PAGES | AUTH | Oops', () => {
         -webkit-justify-content: flex-end;
         -ms-flex-pack: end;
         justify-content: flex-end;
+      }
+
+      .c2 {
+        -webkit-align-items: stretch;
+        -webkit-box-align: stretch;
+        -ms-flex-align: stretch;
+        align-items: stretch;
+        display: -webkit-box;
+        display: -webkit-flex;
+        display: -ms-flexbox;
+        display: flex;
+        -webkit-flex-direction: column;
+        -ms-flex-direction: column;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .c4 {
         -webkit-align-items: center;
         -webkit-box-align: center;
         -ms-flex-align: center;
         align-items: center;
-      }
-
-      .c13 {
         display: -webkit-box;
         display: -webkit-flex;
         display: -ms-flexbox;
@@ -82,13 +147,47 @@ describe('ADMIN | PAGES | AUTH | Oops', () => {
         -webkit-flex-direction: row;
         -ms-flex-direction: row;
         flex-direction: row;
+        gap: 16px;
+        -webkit-box-pack: justify;
+        -webkit-justify-content: space-between;
+        -ms-flex-pack: justify;
+        justify-content: space-between;
+      }
+
+      .c7 {
         -webkit-align-items: center;
         -webkit-box-align: center;
         -ms-flex-align: center;
         align-items: center;
+        display: -webkit-box;
+        display: -webkit-flex;
+        display: -ms-flexbox;
+        display: flex;
+        -webkit-flex-direction: row;
+        -ms-flex-direction: row;
+        flex-direction: row;
+        gap: 12px;
       }
 
-      .c20 {
+      .c17 {
+        -webkit-align-items: center;
+        -webkit-box-align: center;
+        -ms-flex-align: center;
+        align-items: center;
+        display: -webkit-box;
+        display: -webkit-flex;
+        display: -ms-flexbox;
+        display: flex;
+        -webkit-flex-direction: row;
+        -ms-flex-direction: row;
+        flex-direction: row;
+      }
+
+      .c24 {
+        -webkit-align-items: center;
+        -webkit-box-align: center;
+        -ms-flex-align: center;
+        align-items: center;
         display: -webkit-box;
         display: -webkit-flex;
         display: -ms-flexbox;
@@ -100,38 +199,73 @@ describe('ADMIN | PAGES | AUTH | Oops', () => {
         -webkit-justify-content: center;
         -ms-flex-pack: center;
         justify-content: center;
-        -webkit-align-items: center;
-        -webkit-box-align: center;
-        -ms-flex-align: center;
-        align-items: center;
       }
 
-      .c17 {
-        color: #32324d;
-        font-weight: 600;
-        font-size: 2rem;
-        line-height: 1.25;
+      .c5 {
+        border: 1px solid #dcdce4;
+        min-height: 2.5rem;
+        outline: none;
+        box-shadow: 0;
+        -webkit-transition-property: border-color,box-shadow,fill;
+        transition-property: border-color,box-shadow,fill;
+        -webkit-transition-duration: 0.2s;
+        transition-duration: 0.2s;
       }
 
-      .c18 {
-        color: #32324d;
-        font-size: 0.875rem;
-        line-height: 1.43;
+      .c5[aria-disabled='true'] {
+        color: #666687;
       }
 
-      .c10:focus-visible {
+      .c5:focus-visible {
         outline: none;
       }
 
-      .c22 {
-        color: #4945ff;
-        font-weight: 600;
-        font-size: 0.6875rem;
-        line-height: 1.45;
-        text-transform: uppercase;
+      .c5:focus-within {
+        border: 1px solid #4945ff;
+        box-shadow: #4945ff 0px 0px 0px 2px;
       }
 
-      .c21 {
+      .c12 > svg {
+        width: 0.375rem;
+      }
+
+      .c12 > svg > path {
+        fill: #666687;
+      }
+
+      .c10 {
+        -webkit-flex: 1;
+        -ms-flex: 1;
+        flex: 1;
+      }
+
+      .c11 {
+        display: -webkit-box;
+        display: -webkit-flex;
+        display: -ms-flexbox;
+        display: flex;
+        gap: 4px;
+        -webkit-flex-wrap: wrap;
+        -ms-flex-wrap: wrap;
+        flex-wrap: wrap;
+      }
+
+      .c27[data-state='checked'] .c8 {
+        font-weight: bold;
+        color: #4945ff;
+      }
+
+      .c14:focus-visible {
+        outline: none;
+      }
+
+      .c26 {
+        font-size: 0.875rem;
+        line-height: 1.43;
+        color: #4945ff;
+      }
+
+      .c25 {
         display: -webkit-inline-box;
         display: -webkit-inline-flex;
         display: -ms-inline-flexbox;
@@ -140,22 +274,30 @@ describe('ADMIN | PAGES | AUTH | Oops', () => {
         -webkit-box-align: center;
         -ms-flex-align: center;
         align-items: center;
-        text-transform: uppercase;
         -webkit-text-decoration: none;
         text-decoration: none;
+        gap: 8px;
         position: relative;
         outline: none;
       }
 
-      .c21 svg path {
-        fill: #4945ff;
-      }
-
-      .c21 svg {
+      .c25 svg {
         font-size: 0.625rem;
       }
 
-      .c21:after {
+      .c25 svg path {
+        fill: #4945ff;
+      }
+
+      .c25:hover {
+        color: #7b79ff;
+      }
+
+      .c25:active {
+        color: #271fe0;
+      }
+
+      .c25:after {
         -webkit-transition-property: all;
         transition-property: all;
         -webkit-transition-duration: 0.2s;
@@ -170,11 +312,11 @@ describe('ADMIN | PAGES | AUTH | Oops', () => {
         border: 2px solid transparent;
       }
 
-      .c21:focus-visible {
+      .c25:focus-visible {
         outline: none;
       }
 
-      .c21:focus-visible:after {
+      .c25:focus-visible:after {
         border-radius: 8px;
         content: '';
         position: absolute;
@@ -185,177 +327,19 @@ describe('ADMIN | PAGES | AUTH | Oops', () => {
         border: 2px solid #4945ff;
       }
 
-      .c5 {
-        font-weight: 600;
-        color: #32324d;
-        font-size: 0.75rem;
-        line-height: 1.33;
+      .c19 {
+        height: 4.5rem;
       }
 
-      .c7 {
-        padding-left: 8px;
-      }
-
-      .c2 {
-        display: -webkit-box;
-        display: -webkit-flex;
-        display: -ms-flexbox;
-        display: flex;
-        cursor: pointer;
-        padding: 8px;
-        border-radius: 4px;
-        background: #ffffff;
-        border: 1px solid #dcdce4;
-        position: relative;
-        outline: none;
-      }
-
-      .c2 svg {
-        height: 12px;
-        width: 12px;
-      }
-
-      .c2 svg > g,
-      .c2 svg path {
-        fill: #ffffff;
-      }
-
-      .c2[aria-disabled='true'] {
-        pointer-events: none;
-      }
-
-      .c2:after {
-        -webkit-transition-property: all;
-        transition-property: all;
-        -webkit-transition-duration: 0.2s;
-        transition-duration: 0.2s;
-        border-radius: 8px;
-        content: '';
-        position: absolute;
-        top: -4px;
-        bottom: -4px;
-        left: -4px;
-        right: -4px;
-        border: 2px solid transparent;
-      }
-
-      .c2:focus-visible {
-        outline: none;
-      }
-
-      .c2:focus-visible:after {
-        border-radius: 8px;
-        content: '';
-        position: absolute;
-        top: -5px;
-        bottom: -5px;
-        left: -5px;
-        right: -5px;
-        border: 2px solid #4945ff;
-      }
-
-      .c3 {
-        -webkit-align-items: center;
-        -webkit-box-align: center;
-        -ms-flex-align: center;
-        align-items: center;
-        padding: 8px 16px;
-        background: #4945ff;
-        border: none;
-        border: 1px solid transparent;
-        background: transparent;
-      }
-
-      .c3 .c6 {
-        display: -webkit-box;
-        display: -webkit-flex;
-        display: -ms-flexbox;
-        display: flex;
-        -webkit-align-items: center;
-        -webkit-box-align: center;
-        -ms-flex-align: center;
-        align-items: center;
-      }
-
-      .c3 .c4 {
-        color: #ffffff;
-      }
-
-      .c3[aria-disabled='true'] {
-        border: 1px solid #dcdce4;
-        background: #eaeaef;
-      }
-
-      .c3[aria-disabled='true'] .c4 {
-        color: #666687;
-      }
-
-      .c3[aria-disabled='true'] svg > g,
-      .c3[aria-disabled='true'] svg path {
-        fill: #666687;
-      }
-
-      .c3[aria-disabled='true']:active {
-        border: 1px solid #dcdce4;
-        background: #eaeaef;
-      }
-
-      .c3[aria-disabled='true']:active .c4 {
-        color: #666687;
-      }
-
-      .c3[aria-disabled='true']:active svg > g,
-      .c3[aria-disabled='true']:active svg path {
-        fill: #666687;
-      }
-
-      .c3:hover {
-        background-color: #f6f6f9;
-      }
-
-      .c3:active {
-        border: 1px solid undefined;
-        background: undefined;
-      }
-
-      .c3 .c4 {
-        color: #32324d;
-      }
-
-      .c3 svg > g,
-      .c3 svg path {
-        fill: #8e8ea9;
-      }
-
-      .c8 {
-        display: -webkit-box;
-        display: -webkit-flex;
-        display: -ms-flexbox;
-        display: flex;
-        -webkit-align-items: center;
-        -webkit-box-align: center;
-        -ms-flex-align: center;
-        align-items: center;
-      }
-
-      .c8 svg {
-        height: 4px;
-        width: 6px;
-      }
-
-      .c12 {
+      .c16 {
         margin: 0 auto;
         width: 552px;
       }
 
-      .c14 {
+      .c18 {
         -webkit-flex-direction: column;
         -ms-flex-direction: column;
         flex-direction: column;
-      }
-
-      .c15 {
-        height: 4.5rem;
       }
 
       <div>
@@ -365,85 +349,106 @@ describe('ADMIN | PAGES | AUTH | Oops', () => {
           <div
             class="c1"
           >
-            <div>
-              <button
-                aria-controls="simplemenu-1"
-                aria-disabled="false"
-                aria-expanded="false"
-                aria-haspopup="true"
-                class="c2 c3"
-                type="button"
+            <div
+              class=""
+            >
+              <div
+                class="c2"
               >
-                <span
-                  class="c4 c5"
-                />
                 <div
-                  aria-hidden="true"
-                  class="c6 c7"
+                  aria-autocomplete="none"
+                  aria-controls="radix-:r3:"
+                  aria-describedby=":r0:-hint :r0:-error"
+                  aria-expanded="false"
+                  class="c3 c4 c5"
+                  data-state="closed"
+                  dir="ltr"
+                  id=":r0:"
+                  overflow="hidden"
+                  role="combobox"
+                  tabindex="0"
                 >
                   <span
-                    class="c8"
+                    class="c6 c7"
                   >
-                    <svg
-                      aria-hidden="true"
-                      fill="none"
-                      height="1em"
-                      viewBox="0 0 14 8"
-                      width="1em"
-                      xmlns="http://www.w3.org/2000/svg"
+                    <span
+                      class="c8 c9 c10"
                     >
-                      <path
-                        clip-rule="evenodd"
-                        d="M14 .889a.86.86 0 01-.26.625L7.615 7.736A.834.834 0 017 8a.834.834 0 01-.615-.264L.26 1.514A.861.861 0 010 .889c0-.24.087-.45.26-.625A.834.834 0 01.875 0h12.25c.237 0 .442.088.615.264a.86.86 0 01.26.625z"
-                        fill="#32324D"
-                        fill-rule="evenodd"
-                      />
-                    </svg>
+                      <span
+                        class="c11"
+                      >
+                        English
+                      </span>
+                    </span>
+                  </span>
+                  <span
+                    class="c7"
+                  >
+                    <span
+                      aria-hidden="true"
+                      class="c12"
+                    >
+                      <svg
+                        fill="none"
+                        height="1rem"
+                        viewBox="0 0 14 8"
+                        width="1rem"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          clip-rule="evenodd"
+                          d="M14 .889a.86.86 0 0 1-.26.625L7.615 7.736A.834.834 0 0 1 7 8a.834.834 0 0 1-.615-.264L.26 1.514A.861.861 0 0 1 0 .889c0-.24.087-.45.26-.625A.834.834 0 0 1 .875 0h12.25c.237 0 .442.088.615.264a.86.86 0 0 1 .26.625Z"
+                          fill="#32324D"
+                          fill-rule="evenodd"
+                        />
+                      </svg>
+                    </span>
                   </span>
                 </div>
-              </button>
+              </div>
             </div>
           </div>
         </header>
         <div
-          class="c9"
+          class="c13"
         >
           <main
             aria-labelledby="main-content-title"
-            class="c10"
+            class="c14"
             id="main-content"
             tabindex="-1"
           >
             <div
-              class="c11 c12"
+              class="c15 c16"
             >
               <div
-                class="c13 c14"
+                class="c17 c18"
               >
                 <img
                   alt=""
                   aria-hidden="true"
-                  class="c15"
+                  class="c19"
+                  src="customAuthLogo.png"
                 />
                 <div
-                  class="c16"
+                  class="c20"
                 >
                   <h1
-                    class="c17"
+                    class="c8 c21"
                   >
                     Oops...
                   </h1>
                 </div>
                 <span
-                  class="c18"
+                  class="c8 c22"
                 >
                   Your account has been suspended.
                 </span>
                 <div
-                  class="c19"
+                  class="c23"
                 >
                   <span
-                    class="c18"
+                    class="c8 c22"
                   >
                     If this is a mistake, please contact your administrator.
                   </span>
@@ -451,17 +456,17 @@ describe('ADMIN | PAGES | AUTH | Oops', () => {
               </div>
             </div>
             <div
-              class="c20"
+              class="c24"
             >
               <div
-                class="c19"
+                class="c23"
               >
                 <a
-                  class="c21"
+                  class="c25"
                   href="/auth/login"
                 >
                   <span
-                    class="c22"
+                    class="c26"
                   >
                     Sign in
                   </span>

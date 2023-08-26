@@ -1,17 +1,20 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
-import { useSelector, shallowEqual } from 'react-redux';
-import axios from 'axios';
-import { axiosInstance } from '../../../core/utils';
-import formatLayouts from './utils/formatLayouts';
-import reducer, { initialState } from './reducer';
-import { makeSelectModelAndComponentSchemas } from '../../pages/App/selectors';
-import { getRequestUrl } from '../../utils';
 
-const useFetchContentTypeLayout = contentTypeUID => {
+import { useFetchClient } from '@strapi/helper-plugin';
+import axios from 'axios';
+import { shallowEqual, useSelector } from 'react-redux';
+
+import { makeSelectModelAndComponentSchemas } from '../../pages/App/selectors';
+
+import reducer, { initialState } from './reducer';
+import formatLayouts from './utils/formatLayouts';
+
+const useFetchContentTypeLayout = (contentTypeUID) => {
   const [{ error, isLoading, layout, layouts }, dispatch] = useReducer(reducer, initialState);
   const schemasSelector = useMemo(makeSelectModelAndComponentSchemas, []);
-  const { schemas } = useSelector(state => schemasSelector(state), shallowEqual);
+  const { schemas } = useSelector((state) => schemasSelector(state), shallowEqual);
   const isMounted = useRef(true);
+  const { get } = useFetchClient();
 
   const getData = useCallback(
     async (uid, source) => {
@@ -23,11 +26,11 @@ const useFetchContentTypeLayout = contentTypeUID => {
       dispatch({ type: 'GET_DATA' });
 
       try {
-        const endPoint = getRequestUrl(`content-types/${uid}/configuration`);
-
         const {
           data: { data },
-        } = await axiosInstance.get(endPoint, { cancelToken: source.token });
+        } = await get(`/content-manager/content-types/${uid}/configuration`, {
+          cancelToken: source.token,
+        });
 
         dispatch({
           type: 'GET_DATA_SUCCEEDED',
@@ -37,7 +40,6 @@ const useFetchContentTypeLayout = contentTypeUID => {
         if (axios.isCancel(error)) {
           return;
         }
-
         if (isMounted.current) {
           console.error(error);
         }
@@ -47,7 +49,7 @@ const useFetchContentTypeLayout = contentTypeUID => {
         }
       }
     },
-    [layouts, schemas]
+    [layouts, schemas, get]
   );
 
   useEffect(() => {
@@ -68,10 +70,10 @@ const useFetchContentTypeLayout = contentTypeUID => {
   }, [contentTypeUID, getData]);
 
   const updateLayout = useCallback(
-    newLayout => {
+    (data) => {
       dispatch({
         type: 'UPDATE_LAYOUT',
-        newLayout: formatLayouts({ contentType: newLayout, components: {} }, schemas),
+        newLayout: formatLayouts(data, schemas),
       });
     },
     [schemas]

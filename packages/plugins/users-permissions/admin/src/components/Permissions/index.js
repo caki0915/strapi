@@ -1,33 +1,34 @@
 import React, { useReducer } from 'react';
-import { Accordion, AccordionToggle, AccordionContent } from '@strapi/design-system/Accordion';
+
+import { Accordion, AccordionContent, AccordionToggle, Flex } from '@strapi/design-system';
 import { useIntl } from 'react-intl';
-import { Box } from '@strapi/design-system/Box';
-import { Stack } from '@strapi/design-system/Stack';
+
 import { useUsersPermissions } from '../../contexts/UsersPermissionsContext';
 import formatPluginName from '../../utils/formatPluginName';
-import PermissionRow from './PermissionRow';
+
 import init from './init';
+import PermissionRow from './PermissionRow';
 import { initialState, reducer } from './reducer';
 
 const Permissions = () => {
   const { modifiedData } = useUsersPermissions();
   const { formatMessage } = useIntl();
-  const [{ collapses }, dispatch] = useReducer(reducer, initialState, state =>
+  const [{ collapses }, dispatch] = useReducer(reducer, initialState, (state) =>
     init(state, modifiedData)
   );
 
-  const handleToggle = index =>
+  const handleToggle = (index) =>
     dispatch({
       type: 'TOGGLE_COLLAPSE',
       index,
     });
 
   return (
-    <Stack size={1}>
+    <Flex direction="column" alignItems="stretch" gap={1}>
       {collapses.map((collapse, index) => (
         <Accordion
           expanded={collapse.isOpen}
-          toggle={() => handleToggle(index)}
+          onToggle={() => handleToggle(index)}
           key={collapse.name}
           variant={index % 2 === 0 ? 'secondary' : undefined}
         >
@@ -43,13 +44,11 @@ const Permissions = () => {
             variant={index % 2 ? 'primary' : 'secondary'}
           />
           <AccordionContent>
-            <Box>
-              <PermissionRow permissions={modifiedData[collapse.name]} name={collapse.name} />
-            </Box>
+            <PermissionRow permissions={modifiedData[collapse.name]} name={collapse.name} />
           </AccordionContent>
         </Accordion>
       ))}
-    </Stack>
+    </Flex>
   );
 };
 

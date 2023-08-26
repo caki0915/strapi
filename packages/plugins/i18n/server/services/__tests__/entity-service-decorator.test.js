@@ -30,10 +30,23 @@ const nonLocalizedModel = {
   },
 };
 
+const singleTypeModel = {
+  kind: 'singleType',
+  pluginOptions: {
+    i18n: {
+      localized: true,
+    },
+  },
+  attributes: {},
+};
+
 const models = {
   'test-model': model,
   'non-localized-model': nonLocalizedModel,
+  'localized-single-type-model': singleTypeModel,
 };
+
+const testModels = [['test-model'], ['non-localized-model'], ['localized-single-type-model']];
 
 describe('Entity service decorator', () => {
   beforeAll(() => {
@@ -52,6 +65,9 @@ describe('Entity service decorator', () => {
           create() {},
           update() {},
         };
+      },
+      entityService: {
+        findOne() {},
       },
       getModel(uid) {
         return models[uid || 'test-model'];
@@ -81,7 +97,7 @@ describe('Entity service decorator', () => {
 
     test('Does not wrap options if model is not localized', async () => {
       const defaultService = {
-        wrapParams: jest.fn(opts => Promise.resolve(opts)),
+        wrapParams: jest.fn((opts) => Promise.resolve(opts)),
       };
       const service = decorator(defaultService);
 
@@ -93,7 +109,7 @@ describe('Entity service decorator', () => {
 
     test('does not change non params options', async () => {
       const defaultService = {
-        wrapParams: jest.fn(opts => Promise.resolve(opts)),
+        wrapParams: jest.fn((opts) => Promise.resolve(opts)),
       };
       const service = decorator(defaultService);
 
@@ -105,7 +121,7 @@ describe('Entity service decorator', () => {
 
     test('Adds locale param', async () => {
       const defaultService = {
-        wrapParams: jest.fn(opts => Promise.resolve(opts)),
+        wrapParams: jest.fn((opts) => Promise.resolve(opts)),
       };
       const service = decorator(defaultService);
 
@@ -126,15 +142,25 @@ describe('Entity service decorator', () => {
       ['delete', { filters: [{ id: { $in: [1] } }] }],
     ];
 
+    test.each(testModels)('Always uses original wrapParams in output - %s', async (modelName) => {
+      const defaultService = {
+        wrapParams: jest.fn(() => Promise.resolve({ Test: 'Test' })),
+      };
+      const service = decorator(defaultService);
+
+      const output = await service.wrapParams({}, { uid: modelName, action: 'findMany' });
+
+      expect(output.Test).toEqual('Test');
+    });
     test.each(testData)(
       "Doesn't add locale param when the params contain id or id_in - %s",
       async (action, params) => {
         const defaultService = {
-          wrapParams: jest.fn(opts => Promise.resolve(opts)),
+          wrapParams: jest.fn((opts) => Promise.resolve(opts)),
         };
         const service = decorator(defaultService);
 
-        const input = Object.assign({ populate: ['test'], ...params });
+        const input = { populate: ['test'], ...params };
         const output = await service.wrapParams(input, { uid: 'test-model', action });
 
         expect(output).toEqual({ populate: ['test'], ...params });
@@ -143,7 +169,7 @@ describe('Entity service decorator', () => {
 
     test('Replaces locale param', async () => {
       const defaultService = {
-        wrapParams: jest.fn(opts => Promise.resolve(opts)),
+        wrapParams: jest.fn((opts) => Promise.resolve(opts)),
       };
       const service = decorator(defaultService);
 
@@ -270,6 +296,112 @@ describe('Entity service decorator', () => {
 
       expect(defaultService.update).toHaveBeenCalledWith('non-localized-model', 1, input);
       expect(syncNonLocalizedAttributes).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('findMany', () => {
+    test('Calls original findMany for non localized content type', async () => {
+      const entry = {
+        id: 1,
+      };
+
+      const defaultService = {
+        findMany: jest.fn(() => Promise.resolve(entry)),
+      };
+
+      const service = decorator(defaultService);
+
+      const input = { data: { title: 'title ' } };
+      await service.findMany('non-localized-model', input);
+
+      expect(defaultService.findMany).toHaveBeenCalledWith('non-localized-model', input);
+    });
+
+    test('calls db.findMany for localized collection type', async () => {
+      const findManySpy = jest.fn();
+      const db = {
+        query: jest.fn(() => ({
+          findMany: findManySpy,
+        })),
+      };
+      global.strapi = {
+        ...global.strapi,
+        getModel: jest.fn((uid) => models[uid || 'test-model']),
+        db,
+      };
+
+      const entry = {
+        id: 1,
+        localizations: [{ id: 2 }],
+      };
+
+      const defaultService = {
+        wrapParams: jest.fn(() => Promise.resolve(entry)),
+        findMany: jest.fn(() => Promise.resolve(entry)),
+      };
+
+      const service = decorator(defaultService);
+
+      const input = { data: { title: 'title ' } };
+      await service.findMany('test-model', input);
+
+      expect(global.strapi.getModel).toHaveBeenCalledWith('test-model');
+      expect(defaultService.findMany).toBeCalled();
+    });
+
+    describe('single types', () => {
+      const entry = {
+        id: 1,
+        localizations: [{ id: 2 }],
+      };
+
+      const defaultService = {
+        wrapResult: jest.fn((input) => Promise.resolve(input)),
+        wrapParams: jest.fn(() => Promise.resolve(entry)),
+        findMany: jest.fn(() => Promise.resolve(entry)),
+      };
+
+      const service = decorator(defaultService);
+
+      test('calls db.findMany for single type with locale=all', async () => {
+        const findManySpy = jest.fn();
+        const db = {
+          query: jest.fn(() => ({
+            findMany: findManySpy,
+          })),
+        };
+        global.strapi = {
+          ...global.strapi,
+          getModel: jest.fn((uid) => models[uid || 'test-model']),
+          db,
+        };
+        const input = { data: { title: 'title ' }, locale: 'all' };
+        await service.findMany('localized-single-type-model', input);
+
+        expect(global.strapi.getModel).toHaveBeenCalledWith('localized-single-type-model');
+        expect(global.strapi.db.query).toBeCalled();
+      });
+
+      test('calls db.findMany for single type with no local param', async () => {
+        const findOneSpy = jest.fn(() => Promise.resolve(entry));
+        const db = {
+          query: jest.fn(() => ({
+            findOne: findOneSpy,
+          })),
+        };
+        global.strapi = {
+          ...global.strapi,
+          getModel: jest.fn((uid) => models[uid || 'test-model']),
+          db,
+        };
+        const input = { data: { title: 'title ' } };
+        await service.findMany('localized-single-type-model', input);
+
+        expect(global.strapi.getModel).toHaveBeenCalledWith('localized-single-type-model');
+        expect(defaultService.findMany).toHaveBeenCalledWith('localized-single-type-model', {
+          data: { title: 'title ' },
+        });
+      });
     });
   });
 });

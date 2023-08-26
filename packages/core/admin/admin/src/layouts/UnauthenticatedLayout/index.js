@@ -1,8 +1,9 @@
 import React from 'react';
-import styled from 'styled-components';
+
+import { Box, Flex } from '@strapi/design-system';
 import PropTypes from 'prop-types';
-import { Box } from '@strapi/design-system/Box';
-import { Flex } from '@strapi/design-system/Flex';
+import styled from 'styled-components';
+
 import LocaleToggle from './LocaleToggle';
 
 const Wrapper = styled(Box)`
@@ -40,7 +41,7 @@ const UnauthenticatedLayout = ({ children }) => {
           <LocaleToggle />
         </Box>
       </Flex>
-      <Box paddingTop={11} paddingBottom={11}>
+      <Box paddingTop={2} paddingBottom={11}>
         {children}
       </Box>
     </div>

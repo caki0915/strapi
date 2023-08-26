@@ -1,5 +1,7 @@
-import { has, isObject } from 'lodash';
+import isObject from 'lodash/isObject';
+
 import { createArrayOfValues } from '../../utils';
+
 import { createConditionsArray } from './formatSettingsPermissionsToAPI';
 
 /**
@@ -71,13 +73,13 @@ const createPermissionWithoutProperties = (action, subject, { conditions }) => {
 const createSubjectPermissions = (subject, actions) => {
   const permissions = Object.entries(actions).reduce((acc, current) => {
     const [actionName, permissions] = current;
-    const shouldCreatePermission = createArrayOfValues(permissions).some(val => val);
+    const shouldCreatePermission = createArrayOfValues(permissions).some((val) => val);
 
     if (!shouldCreatePermission) {
       return acc;
     }
 
-    if (!has(permissions, 'properties.enabled')) {
+    if (!permissions?.properties?.enabled) {
       const createdPermissionsArray = createPermissionWithProperties(
         actionName,
         subject,
@@ -106,7 +108,7 @@ const createSubjectPermissions = (subject, actions) => {
  * @param {object} contentTypesPermissions
  * @returns {array<object>}
  */
-const formatContentTypesPermissionToAPI = contentTypesPermissions => {
+const formatContentTypesPermissionToAPI = (contentTypesPermissions) => {
   const permissions = Object.entries(contentTypesPermissions).reduce((allPermissions, current) => {
     const [subject, currentSubjectActions] = current;
 
@@ -119,4 +121,4 @@ const formatContentTypesPermissionToAPI = contentTypesPermissions => {
 };
 
 export default formatContentTypesPermissionToAPI;
-export { createPropertyArray, createPermissionWithProperties };
+export { createPermissionWithProperties, createPropertyArray };

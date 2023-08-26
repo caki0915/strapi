@@ -1,15 +1,14 @@
 import React from 'react';
-import PropTypes from 'prop-types';
-import { Box } from '@strapi/design-system/Box';
-import { Flex } from '@strapi/design-system/Flex';
-import { Link } from '@strapi/design-system/Link';
-import { Typography } from '@strapi/design-system/Typography';
-import Cog from '@strapi/icons/Cog';
-import { useIntl } from 'react-intl';
+
+import { Box, Flex, Grid, GridItem, Typography } from '@strapi/design-system';
+import { Link } from '@strapi/helper-plugin';
+import { Cog } from '@strapi/icons';
 import get from 'lodash/get';
-import { Grid, GridItem } from '@strapi/design-system/Grid';
-import useLayoutDnd from '../../../hooks/useLayoutDnd';
+import PropTypes from 'prop-types';
+import { useIntl } from 'react-intl';
+
 import getTrad from '../../../utils/getTrad';
+import { useLayoutDnd } from '../hooks/useLayoutDnd';
 
 const ComponentFieldList = ({ componentUid }) => {
   const { componentLayouts } = useLayoutDnd();
@@ -22,7 +21,7 @@ const ComponentFieldList = ({ componentUid }) => {
       {componentLayout.map((row, index) => (
         // eslint-disable-next-line react/no-array-index-key
         <Grid gap={4} key={index}>
-          {row.map(rowContent => (
+          {row.map((rowContent) => (
             <GridItem key={rowContent.name} col={rowContent.size}>
               <Box paddingTop={2}>
                 <Flex

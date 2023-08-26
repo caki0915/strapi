@@ -5,9 +5,11 @@
 // Also the strapi-generate-plugins/files/admin/src/index.js needs to be updated
 // IF THE DOC IS NOT UPDATED THE PULL REQUEST WILL NOT BE MERGED
 import { prefixPluginTranslations } from '@strapi/helper-plugin';
+import { Information } from '@strapi/icons';
+
 import pluginPkg from '../../package.json';
-import PluginIcon from './components/PluginIcon';
-import pluginPermissions from './permissions';
+
+import { PERMISSIONS } from './constants';
 import pluginId from './pluginId';
 
 const name = pluginPkg.strapi.name;
@@ -16,19 +18,13 @@ export default {
   register(app) {
     app.addMenuLink({
       to: `/plugins/${pluginId}`,
-      icon: PluginIcon,
+      icon: Information,
       intlLabel: {
         id: `${pluginId}.plugin.name`,
         defaultMessage: 'Documentation',
       },
-      permissions: pluginPermissions.main,
-      Component: async () => {
-        const component = await import(
-          /* webpackChunkName: "documentation-page" */ './pages/PluginPage'
-        );
-
-        return component;
-      },
+      permissions: PERMISSIONS.main,
+      Component: () => import(/* webpackChunkName: "documentation-page" */ './pages/PluginPage'),
     });
 
     app.registerPlugin({
@@ -44,19 +40,14 @@ export default {
       },
       id: 'documentation',
       to: `/settings/${pluginId}`,
-      Component: async () => {
-        const component = await import(
-          /* webpackChunkName: "documentation-settings" */ './pages/SettingsPage'
-        );
-
-        return component;
-      },
-      permissions: pluginPermissions.main,
+      Component: () =>
+        import(/* webpackChunkName: "documentation-settings" */ './pages/SettingsPage'),
+      permissions: PERMISSIONS.main,
     });
   },
   async registerTrads({ locales }) {
     const importedTrads = await Promise.all(
-      locales.map(locale => {
+      locales.map((locale) => {
         return import(
           /* webpackChunkName: "documentation-translation-[request]" */ `./translations/${locale}.json`
         )

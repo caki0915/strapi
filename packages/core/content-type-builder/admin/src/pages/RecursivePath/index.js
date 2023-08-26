@@ -1,8 +1,11 @@
-import React, { Suspense, lazy } from 'react';
-import { Switch, Route, useRouteMatch, useParams } from 'react-router-dom';
-import { LoadingIndicatorPage } from '@strapi/helper-plugin';
+import React, { lazy, Suspense } from 'react';
 
-const ListView = lazy(() => import('../ListView'));
+import { LoadingIndicatorPage } from '@strapi/helper-plugin';
+import { Route, Switch, useParams, useRouteMatch } from 'react-router-dom';
+
+const ListView = lazy(() =>
+  import(/* webpackChunkName: "content-type-builder-recursive-path" */ '../ListView')
+);
 
 const RecursivePath = () => {
   const { url } = useRouteMatch();

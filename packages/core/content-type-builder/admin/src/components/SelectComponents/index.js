@@ -5,12 +5,14 @@
  */
 
 import React from 'react';
+
+import { MultiSelectNested } from '@strapi/design-system';
 import PropTypes from 'prop-types';
-import { MultiSelectNested } from '@strapi/design-system/Select';
 import { useIntl } from 'react-intl';
+
 import useDataManager from '../../hooks/useDataManager';
-import findAttribute from '../../utils/findAttribute';
 import { getTrad } from '../../utils';
+import findAttribute from '../../utils/findAttribute';
 
 const SelectComponents = ({ dynamicZoneTarget, intlLabel, name, onChange, value }) => {
   const { formatMessage } = useIntl();
@@ -61,7 +63,7 @@ const SelectComponents = ({ dynamicZoneTarget, intlLabel, name, onChange, value 
       label={formatMessage(intlLabel)}
       customizeContent={() => displayedValue}
       name={name}
-      onChange={values => {
+      onChange={(values) => {
         onChange({ target: { name, value: values, type: 'select-components' } });
       }}
       options={options}

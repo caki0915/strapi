@@ -8,7 +8,9 @@ const operators = {
   not: require('./not'),
 
   eq: require('./eq'),
+  eqi: require('./eqi'),
   ne: require('./ne'),
+  nei: require('./nei'),
 
   startsWith: require('./starts-with'),
   endsWith: require('./ends-with'),
@@ -35,4 +37,4 @@ const operators = {
 };
 
 // Instantiate every operator with the Strapi instance
-module.exports = context => mapValues(opCtor => opCtor(context), operators);
+module.exports = (context) => mapValues((opCtor) => opCtor(context), operators);

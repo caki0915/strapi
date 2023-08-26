@@ -1,14 +1,13 @@
 import React from 'react';
-import styled from 'styled-components';
+
+import { Box, Flex, IconButton, Typography } from '@strapi/design-system';
+import { Pencil, Trash } from '@strapi/icons';
 import PropTypes from 'prop-types';
 import { useIntl } from 'react-intl';
-import { Box } from '@strapi/design-system/Box';
-import { Flex } from '@strapi/design-system/Flex';
-import { IconButton } from '@strapi/design-system/IconButton';
-import { Typography } from '@strapi/design-system/Typography';
-import Pencil from '@strapi/icons/Pencil';
-import Trash from '@strapi/icons/Trash';
+import styled from 'styled-components';
+
 import { getTrad } from '../../../utils';
+
 import ComponentFieldList from './ComponentFieldList';
 import DynamicZoneList from './DynamicZoneList';
 
@@ -24,7 +23,7 @@ const FieldButtonContent = ({ attribute, onEditField, onDeleteField, children })
 
   return (
     <Box overflow="hidden" width="100%">
-      <Flex paddingLeft={3} alignItems="baseline" justifyContent="space-between">
+      <Flex paddingLeft={3} alignItems="center" justifyContent="space-between">
         <Typography fontWeight="semiBold" textColor="neutral800" ellipsis>
           {children}
         </Typography>
@@ -44,7 +43,7 @@ const FieldButtonContent = ({ attribute, onEditField, onDeleteField, children })
           <CustomIconButton
             label={formatMessage(
               {
-                id: getTrad('app.component.table.delete'),
+                id: 'global.delete-target',
                 defaultMessage: `Delete {target}`,
               },
               {

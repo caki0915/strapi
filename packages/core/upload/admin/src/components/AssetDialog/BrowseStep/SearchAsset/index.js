@@ -1,13 +1,16 @@
-import React, { useState, useLayoutEffect, useRef } from 'react';
+import React, { useLayoutEffect, useRef, useState } from 'react';
+
+import { IconButton, Searchbar, SearchForm } from '@strapi/design-system';
+import { useTracking } from '@strapi/helper-plugin';
+import { Search } from '@strapi/icons';
 import PropTypes from 'prop-types';
 import { useIntl } from 'react-intl';
-import { Searchbar, SearchForm } from '@strapi/design-system/Searchbar';
-import { IconButton } from '@strapi/design-system/IconButton';
-import SearchIcon from '@strapi/icons/Search';
+
 import getTrad from '../../../../utils/getTrad';
 
 const SearchAsset = ({ onChangeSearch, queryValue }) => {
   const { formatMessage } = useIntl();
+  const { trackUsage } = useTracking();
   const [isOpen, setIsOpen] = useState(!!queryValue);
   const [value, setValue] = useState(queryValue || '');
   const wrapperRef = useRef(null);
@@ -21,7 +24,7 @@ const SearchAsset = ({ onChangeSearch, queryValue }) => {
   }, [isOpen]);
 
   const handleToggle = () => {
-    setIsOpen(prev => !prev);
+    setIsOpen((prev) => !prev);
   };
 
   const handleClear = () => {
@@ -29,10 +32,11 @@ const SearchAsset = ({ onChangeSearch, queryValue }) => {
     onChangeSearch(null);
   };
 
-  const handleSubmit = e => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     e.stopPropagation();
 
+    trackUsage('didSearchMediaLibraryElements', { location: 'content-manager' });
     onChangeSearch(value);
   };
 
@@ -43,7 +47,7 @@ const SearchAsset = ({ onChangeSearch, queryValue }) => {
           <Searchbar
             name="search"
             onClear={handleClear}
-            onChange={e => setValue(e.target.value)}
+            onChange={(e) => setValue(e.target.value)}
             clearLabel={formatMessage({
               id: getTrad('search.clear.label'),
               defaultMessage: 'Clear the search',
@@ -62,7 +66,7 @@ const SearchAsset = ({ onChangeSearch, queryValue }) => {
     );
   }
 
-  return <IconButton icon={<SearchIcon />} label="Search" onClick={handleToggle} />;
+  return <IconButton icon={<Search />} label="Search" onClick={handleToggle} />;
 };
 
 SearchAsset.defaultProps = {

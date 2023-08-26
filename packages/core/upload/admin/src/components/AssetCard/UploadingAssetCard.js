@@ -1,21 +1,24 @@
 import React, { useEffect } from 'react';
-import PropTypes from 'prop-types';
-import styled from 'styled-components';
+
 import {
+  Box,
   Card,
+  CardBadge,
   CardBody,
   CardContent,
   CardHeader,
-  CardTitle,
   CardSubtitle,
-  CardBadge,
-} from '@strapi/design-system/Card';
-import { Typography } from '@strapi/design-system/Typography';
-import { Stack } from '@strapi/design-system/Stack';
+  CardTitle,
+  Flex,
+  Typography,
+} from '@strapi/design-system';
+import PropTypes from 'prop-types';
 import { useIntl } from 'react-intl';
-import { getTrad } from '../../utils';
+import styled from 'styled-components';
+
 import { AssetType } from '../../constants';
 import { useUpload } from '../../hooks/useUpload';
+import { getTrad } from '../../utils';
 import { UploadProgress } from '../UploadProgress';
 
 const UploadProgressWrapper = styled.div`
@@ -28,39 +31,40 @@ const Extension = styled.span`
 `;
 
 export const UploadingAssetCard = ({
-  name,
-  extension,
-  assetType,
-  file,
+  asset,
   onCancel,
   onStatusChange,
   addUploadedFiles,
+  folderId,
 }) => {
   const { upload, cancel, error, progress, status } = useUpload();
   const { formatMessage } = useIntl();
 
-  let badgeContent;
+  let badgeContent = formatMessage({
+    id: getTrad('settings.section.doc.label'),
+    defaultMessage: 'Doc',
+  });
 
-  if (assetType === AssetType.Image) {
+  if (asset.type === AssetType.Image) {
     badgeContent = formatMessage({
       id: getTrad('settings.section.image.label'),
       defaultMessage: 'Image',
     });
-  } else if (assetType === AssetType.Video) {
+  } else if (asset.type === AssetType.Video) {
     badgeContent = formatMessage({
       id: getTrad('settings.section.video.label'),
       defaultMessage: 'Video',
     });
-  } else {
+  } else if (asset.type === AssetType.Audio) {
     badgeContent = formatMessage({
-      id: getTrad('settings.section.doc.label'),
-      defaultMessage: 'Doc',
+      id: getTrad('settings.section.audio.label'),
+      defaultMessage: 'Audio',
     });
   }
 
   useEffect(() => {
     const uploadFile = async () => {
-      const files = await upload(file);
+      const files = await upload(asset, folderId);
 
       if (addUploadedFiles) {
         addUploadedFiles(files);
@@ -77,12 +81,12 @@ export const UploadingAssetCard = ({
 
   const handleCancel = () => {
     cancel();
-    onCancel(file);
+    onCancel(asset.rawFile);
   };
 
   return (
-    <Stack size={1}>
-      <Card borderColor={error ? 'danger600' : undefined}>
+    <Flex direction="column" alignItems="stretch" gap={1}>
+      <Card borderColor={error ? 'danger600' : 'neutral150'}>
         <CardHeader>
           <UploadProgressWrapper>
             <UploadProgress error={error} onCancel={handleCancel} progress={progress} />
@@ -90,35 +94,55 @@ export const UploadingAssetCard = ({
         </CardHeader>
         <CardBody>
           <CardContent>
-            <CardTitle as="h2">{name}</CardTitle>
+            <Box paddingTop={1}>
+              <CardTitle as="h2">{asset.name}</CardTitle>
+            </Box>
             <CardSubtitle>
-              <Extension>{extension}</Extension>
+              <Extension>{asset.ext}</Extension>
             </CardSubtitle>
           </CardContent>
-          <CardBadge>{badgeContent}</CardBadge>
+          <Flex paddingTop={1} grow={1}>
+            <CardBadge>{badgeContent}</CardBadge>
+          </Flex>
         </CardBody>
       </Card>
       {error ? (
         <Typography variant="pi" fontWeight="bold" textColor="danger600">
-          {error.message}
+          {formatMessage(
+            error?.response?.data?.error?.message
+              ? {
+                  id: getTrad(`apiError.${error.response.data.error.message}`),
+                  defaultMessage: error.response.data.error.message,
+                  /* See issue: https://github.com/strapi/strapi/issues/13867
+             A proxy might return an error, before the request reaches Strapi
+             and therefore we need to handle errors gracefully.
+          */
+                }
+              : {
+                  id: getTrad('upload.generic-error'),
+                  defaultMessage: 'An error occured while uploading the file.',
+                }
+          )}
         </Typography>
-      ) : (
-        undefined
-      )}
-    </Stack>
+      ) : undefined}
+    </Flex>
   );
 };
 
 UploadingAssetCard.defaultProps = {
   addUploadedFiles: undefined,
+  folderId: null,
 };
 
 UploadingAssetCard.propTypes = {
   addUploadedFiles: PropTypes.func,
-  assetType: PropTypes.oneOf(Object.values(AssetType)).isRequired,
-  extension: PropTypes.string.isRequired,
-  name: PropTypes.string.isRequired,
-  file: PropTypes.instanceOf(File).isRequired,
+  asset: PropTypes.shape({
+    name: PropTypes.string,
+    ext: PropTypes.string,
+    rawFile: PropTypes.instanceOf(File),
+    type: PropTypes.oneOf(Object.values(AssetType)),
+  }).isRequired,
+  folderId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
   onCancel: PropTypes.func.isRequired,
   onStatusChange: PropTypes.func.isRequired,
 };

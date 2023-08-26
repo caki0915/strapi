@@ -1,10 +1,11 @@
 import React, { memo } from 'react';
-import PropTypes from 'prop-types';
+
+import { Button } from '@strapi/design-system';
 import { CheckPermissions } from '@strapi/helper-plugin';
-import { Button } from '@strapi/design-system/Button';
-import Layer from '@strapi/icons/Layer';
-import { useHistory } from 'react-router-dom';
+import { Layer } from '@strapi/icons';
+import PropTypes from 'prop-types';
 import { useIntl } from 'react-intl';
+import { useHistory } from 'react-router-dom';
 
 const cmPermissions = {
   collectionTypesConfigurations: [
@@ -36,11 +37,8 @@ const LinkToCMSettingsView = ({
 }) => {
   const { formatMessage } = useIntl();
   const { push } = useHistory();
-  const {
-    collectionTypesConfigurations,
-    componentsConfigurations,
-    singleTypesConfigurations,
-  } = cmPermissions;
+  const { collectionTypesConfigurations, componentsConfigurations, singleTypesConfigurations } =
+    cmPermissions;
   const label = formatMessage({ id: 'content-type-builder.form.button.configure-view' });
   let permissionsToApply = collectionTypesConfigurations;
 

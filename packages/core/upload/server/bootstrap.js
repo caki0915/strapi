@@ -1,76 +1,57 @@
 'use strict';
 
-const _ = require('lodash');
+const { getService } = require('./utils');
+const { ALLOWED_SORT_STRINGS, ALLOWED_WEBHOOK_EVENTS } = require('./constants');
 
 module.exports = async ({ strapi }) => {
-  // set plugin store
-  const configurator = strapi.store({ type: 'plugin', name: 'upload', key: 'settings' });
+  const defaultConfig = {
+    settings: {
+      sizeOptimization: true,
+      responsiveDimensions: true,
+      autoOrientation: false,
+    },
+    view_configuration: {
+      pageSize: 10,
+      sort: ALLOWED_SORT_STRINGS[0],
+    },
+  };
 
-  strapi.plugin('upload').provider = createProvider(strapi.config.get('plugin.upload', {}));
+  for (const [key, defaultValue] of Object.entries(defaultConfig)) {
+    // set plugin store
+    const configurator = strapi.store({ type: 'plugin', name: 'upload', key });
 
-  // if provider config does not exist set one by default
-  const config = await configurator.get();
+    const config = await configurator.get();
+    if (
+      config &&
+      Object.keys(defaultValue).every((key) => Object.prototype.hasOwnProperty.call(config, key))
+    ) {
+      continue;
+    }
 
-  if (!config) {
+    // if the config does not exist or does not have all the required keys
+    // set from the defaultValue ensuring all required settings are present
     await configurator.set({
-      value: {
-        sizeOptimization: true,
-        responsiveDimensions: true,
-        autoOrientation: false,
-      },
+      value: Object.assign(defaultValue, config || {}),
     });
   }
 
   await registerPermissionActions();
+  await registerWebhookEvents();
+
+  await getService('weeklyMetrics').registerCron();
+  getService('metrics').sendUploadPluginMetrics();
+
+  if (strapi.config.get('plugin.upload.signAdminURLsOnly', false)) {
+    getService('extensions').contentManager.entityManager.addSignedFileUrlsToAdmin();
+  } else {
+    getService('extensions').core.entityService.addSignedFileUrlsToEntityService();
+  }
 };
 
-const createProvider = config => {
-  const { providerOptions, actionOptions = {} } = config;
-
-  const providerName = _.toLower(config.provider);
-  let provider;
-
-  let modulePath;
-  try {
-    modulePath = require.resolve(`@strapi/provider-upload-${providerName}`);
-  } catch (error) {
-    if (error.code === 'MODULE_NOT_FOUND') {
-      modulePath = providerName;
-    } else {
-      throw error;
-    }
-  }
-
-  try {
-    provider = require(modulePath);
-  } catch (err) {
-    throw new Error(`Could not load upload provider "${providerName}".`);
-  }
-
-  const providerInstance = provider.init(providerOptions);
-
-  return Object.assign(Object.create(baseProvider), {
-    ...providerInstance,
-    upload(file, options = actionOptions.upload) {
-      return providerInstance.upload(file, options);
-    },
-    delete(file, options = actionOptions.delete) {
-      return providerInstance.delete(file, options);
-    },
+const registerWebhookEvents = async () =>
+  Object.entries(ALLOWED_WEBHOOK_EVENTS).forEach(([key, value]) => {
+    strapi.webhookStore.addAllowedEvent(key, value);
   });
-};
-
-const baseProvider = {
-  extend(obj) {
-    Object.assign(this, obj);
-  },
-  upload() {
-    throw new Error('Provider upload method is not implemented');
-  },
-  delete() {
-    throw new Error('Provider delete method is not implemented');
-  },
-};
 
 const registerPermissionActions = async () => {
   const actions = [
@@ -106,6 +87,12 @@ const registerPermissionActions = async () => {
       displayName: 'Copy link',
       uid: 'assets.copy-link',
       subCategory: 'assets',
+      pluginName: 'upload',
+    },
+    {
+      section: 'plugins',
+      displayName: 'Configure view',
+      uid: 'configure-view',
       pluginName: 'upload',
     },
     {

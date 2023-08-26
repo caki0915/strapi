@@ -21,14 +21,14 @@ describe('Component validator', () => {
     },
   };
 
-  describe.each(['validateComponentInput', 'validateUpdateComponentInput'])('%p', method => {
+  describe.each(['validateComponentInput', 'validateUpdateComponentInput'])('%p', (method) => {
     test('can validate a regular component', async () => {
       const input = {
         components: [],
         component: {
           category: 'default',
           displayName: 'mycompo',
-          icon: 'american-sign-language-interpreting',
+          icon: 'calendar',
           attributes: {
             title: {
               type: 'string',
@@ -39,7 +39,7 @@ describe('Component validator', () => {
 
       expect.assertions(1);
 
-      await componentValidation[method](input).then(data => {
+      await componentValidation[method](input).then((data) => {
         expect(data).toBe(input);
       });
     });
@@ -50,7 +50,7 @@ describe('Component validator', () => {
         component: {
           category: 'default',
           displayName: 'mycompo',
-          icon: 'american-sign-language-interpreting',
+          icon: 'calendar',
           attributes: {
             title: {
               type: 'string',
@@ -62,7 +62,7 @@ describe('Component validator', () => {
 
       expect.assertions(1);
 
-      await componentValidation[method](input).then(data => {
+      await componentValidation[method](input).then((data) => {
         expect(data).toBe(input);
       });
     });
@@ -74,7 +74,7 @@ describe('Component validator', () => {
         component: {
           category: 'default',
           displayName: 'mycompo',
-          icon: 'american-sign-language-interpreting',
+          icon: 'calendar',
           attributes: {
             title: {
               type: 'string',

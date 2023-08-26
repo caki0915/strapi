@@ -1,32 +1,33 @@
-import React, { memo, useReducer, forwardRef, useImperativeHandle } from 'react';
+import React, { forwardRef, memo, useImperativeHandle, useReducer } from 'react';
+
+import { Flex, Grid, GridItem, Typography } from '@strapi/design-system';
 import PropTypes from 'prop-types';
-import { Typography } from '@strapi/design-system/Typography';
-import { Stack } from '@strapi/design-system/Stack';
-import { Grid, GridItem } from '@strapi/design-system/Grid';
 import { useIntl } from 'react-intl';
-import getTrad from '../../utils/getTrad';
-import Policies from '../Policies';
-import Permissions from '../Permissions';
-import reducer, { initialState } from './reducer';
+
 import { UsersPermissionsProvider } from '../../contexts/UsersPermissionsContext';
+import getTrad from '../../utils/getTrad';
+import Permissions from '../Permissions';
+import Policies from '../Policies';
+
 import init from './init';
+import reducer, { initialState } from './reducer';
 
 const UsersPermissions = forwardRef(({ permissions, routes }, ref) => {
   const { formatMessage } = useIntl();
-  const [state, dispatch] = useReducer(reducer, initialState, state =>
+  const [state, dispatch] = useReducer(reducer, initialState, (state) =>
     init(state, permissions, routes)
   );
 
   useImperativeHandle(ref, () => ({
-    getPermissions: () => {
+    getPermissions() {
       return {
         permissions: state.modifiedData,
       };
     },
-    resetForm: () => {
+    resetForm() {
       dispatch({ type: 'ON_RESET' });
     },
-    setFormAfterSubmit: () => {
+    setFormAfterSubmit() {
       dispatch({ type: 'ON_SUBMIT_SUCCEEDED' });
     },
   }));
@@ -45,7 +46,7 @@ const UsersPermissions = forwardRef(({ permissions, routes }, ref) => {
       value,
     });
 
-  const handleSelectedAction = actionToSelect =>
+  const handleSelectedAction = (actionToSelect) =>
     dispatch({
       type: 'SELECT_ACTION',
       actionToSelect,
@@ -62,8 +63,8 @@ const UsersPermissions = forwardRef(({ permissions, routes }, ref) => {
     <UsersPermissionsProvider value={providerValue}>
       <Grid gap={0} shadow="filterShadow" hasRadius background="neutral0">
         <GridItem col={7} paddingTop={6} paddingBottom={6} paddingLeft={7} paddingRight={7}>
-          <Stack size={6}>
-            <Stack size={2}>
+          <Flex direction="column" alignItems="stretch" gap={6}>
+            <Flex direction="column" alignItems="stretch" gap={2}>
               <Typography variant="delta" as="h2">
                 {formatMessage({
                   id: getTrad('Plugins.header.title'),
@@ -76,9 +77,9 @@ const UsersPermissions = forwardRef(({ permissions, routes }, ref) => {
                   defaultMessage: 'Only actions bound by a route are listed below.',
                 })}
               </Typography>
-            </Stack>
+            </Flex>
             <Permissions />
-          </Stack>
+          </Flex>
         </GridItem>
         <Policies />
       </Grid>

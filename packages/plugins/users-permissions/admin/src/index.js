@@ -5,9 +5,10 @@
 // Also the strapi-generate-plugins/files/admin/src/index.js needs to be updated
 // IF THE DOC IS NOT UPDATED THE PULL REQUEST WILL NOT BE MERGED
 import { prefixPluginTranslations } from '@strapi/helper-plugin';
+
 import pluginPkg from '../../package.json';
-import pluginPermissions from './permissions';
-import pluginId from './pluginId';
+
+import { PERMISSIONS } from './constants';
 import getTrad from './utils/getTrad';
 
 const name = pluginPkg.strapi.name;
@@ -17,7 +18,7 @@ export default {
     // Create the plugin's settings section
     app.createSettingSection(
       {
-        id: pluginId,
+        id: 'users-permissions',
         intlLabel: {
           id: getTrad('Settings.section-label'),
           defaultMessage: 'Users & Permissions plugin',
@@ -26,19 +27,14 @@ export default {
       [
         {
           intlLabel: {
-            id: getTrad('HeaderNav.link.roles'),
+            id: 'global.roles',
             defaultMessage: 'Roles',
           },
           id: 'roles',
-          to: `/settings/${pluginId}/roles`,
-          Component: async () => {
-            const component = await import(
-              /* webpackChunkName: "users-roles-settings-page" */ './pages/Roles'
-            );
-
-            return component;
-          },
-          permissions: pluginPermissions.accessRoles,
+          to: `/settings/users-permissions/roles`,
+          Component: () =>
+            import(/* webpackChunkName: "users-roles-settings-page" */ './pages/Roles'),
+          permissions: PERMISSIONS.accessRoles,
         },
         {
           intlLabel: {
@@ -46,15 +42,10 @@ export default {
             defaultMessage: 'Providers',
           },
           id: 'providers',
-          to: `/settings/${pluginId}/providers`,
-          Component: async () => {
-            const component = await import(
-              /* webpackChunkName: "users-providers-settings-page" */ './pages/Providers'
-            );
-
-            return component;
-          },
-          permissions: pluginPermissions.readProviders,
+          to: `/settings/users-permissions/providers`,
+          Component: () =>
+            import(/* webpackChunkName: "users-providers-settings-page" */ './pages/Providers'),
+          permissions: PERMISSIONS.readProviders,
         },
         {
           intlLabel: {
@@ -62,15 +53,10 @@ export default {
             defaultMessage: 'Email templates',
           },
           id: 'email-templates',
-          to: `/settings/${pluginId}/email-templates`,
-          Component: async () => {
-            const component = await import(
-              /* webpackChunkName: "users-email-settings-page" */ './pages/EmailTemplates'
-            );
-
-            return component;
-          },
-          permissions: pluginPermissions.readEmailTemplates,
+          to: `/settings/users-permissions/email-templates`,
+          Component: () =>
+            import(/* webpackChunkName: "users-email-settings-page" */ './pages/EmailTemplates'),
+          permissions: PERMISSIONS.readEmailTemplates,
         },
         {
           intlLabel: {
@@ -78,34 +64,31 @@ export default {
             defaultMessage: 'Advanced Settings',
           },
           id: 'advanced-settings',
-          to: `/settings/${pluginId}/advanced-settings`,
-          Component: async () => {
-            const component = await import(
+          to: `/settings/users-permissions/advanced-settings`,
+          Component: () =>
+            import(
               /* webpackChunkName: "users-advanced-settings-page" */ './pages/AdvancedSettings'
-            );
-
-            return component;
-          },
-          permissions: pluginPermissions.readAdvancedSettings,
+            ),
+          permissions: PERMISSIONS.readAdvancedSettings,
         },
       ]
     );
 
     app.registerPlugin({
-      id: pluginId,
+      id: 'users-permissions',
       name,
     });
   },
   bootstrap() {},
   async registerTrads({ locales }) {
     const importedTrads = await Promise.all(
-      locales.map(locale => {
+      locales.map((locale) => {
         return import(
           /* webpackChunkName: "users-permissions-translation-[request]" */ `./translations/${locale}.json`
         )
           .then(({ default: data }) => {
             return {
-              data: prefixPluginTranslations(data, pluginId),
+              data: prefixPluginTranslations(data, 'users-permissions'),
               locale,
             };
           })

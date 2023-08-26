@@ -1,14 +1,19 @@
 import React, { useState } from 'react';
+
+import {
+  Button,
+  Checkbox,
+  Dialog,
+  DialogBody,
+  DialogFooter,
+  Flex,
+  Typography,
+} from '@strapi/design-system';
+import { ExclamationMarkCircle } from '@strapi/icons';
 import PropTypes from 'prop-types';
-import styled from 'styled-components';
 import { useIntl } from 'react-intl';
-import { Checkbox } from '@strapi/design-system/Checkbox';
-import { Dialog, DialogBody, DialogFooter } from '@strapi/design-system/Dialog';
-import { Typography } from '@strapi/design-system/Typography';
-import { Flex } from '@strapi/design-system/Flex';
-import { Stack } from '@strapi/design-system/Stack';
-import { Button } from '@strapi/design-system/Button';
-import ExclamationMarkCircle from '@strapi/icons/ExclamationMarkCircle';
+import styled from 'styled-components';
+
 import { getTrad } from '../../utils';
 
 const TextAlignTypography = styled(Typography)`
@@ -19,7 +24,7 @@ const CheckboxConfirmation = ({ description, isCreating, intlLabel, name, onChan
   const { formatMessage } = useIntl();
   const [isOpen, setIsOpen] = useState(false);
 
-  const handleChange = value => {
+  const handleChange = (value) => {
     if (isCreating || value) {
       return onChange({ target: { name, value, type: 'checkbox' } });
     }
@@ -36,7 +41,7 @@ const CheckboxConfirmation = ({ description, isCreating, intlLabel, name, onChan
     setIsOpen(false);
   };
 
-  const handleToggle = () => setIsOpen(prev => !prev);
+  const handleToggle = () => setIsOpen((prev) => !prev);
 
   const label = intlLabel.id
     ? formatMessage(
@@ -67,7 +72,7 @@ const CheckboxConfirmation = ({ description, isCreating, intlLabel, name, onChan
       {isOpen && (
         <Dialog onClose={handleToggle} title="Confirmation" isOpen={isOpen}>
           <DialogBody icon={<ExclamationMarkCircle />}>
-            <Stack size={2}>
+            <Flex direction="column" alignItems="stretch" gap={2}>
               <Flex justifyContent="center">
                 <TextAlignTypography id="confirm-description">
                   {formatMessage({
@@ -85,7 +90,7 @@ const CheckboxConfirmation = ({ description, isCreating, intlLabel, name, onChan
                   })}
                 </Typography>
               </Flex>
-            </Stack>
+            </Flex>
           </DialogBody>
           <DialogFooter
             startAction={

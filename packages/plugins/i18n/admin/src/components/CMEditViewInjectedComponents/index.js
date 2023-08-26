@@ -1,11 +1,14 @@
 import React, { useMemo } from 'react';
+
+import { useCMEditViewDataManager, useQueryParams } from '@strapi/helper-plugin';
 import get from 'lodash/get';
 import has from 'lodash/has';
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
-import { useCMEditViewDataManager, useQueryParams } from '@strapi/helper-plugin';
-import selectI18NLocales from '../../selectors/selectI18nLocales';
+
 import useContentTypePermissions from '../../hooks/useContentTypePermissions';
+import selectI18NLocales from '../../selectors/selectI18nLocales';
+
 import CMEditViewLocalePicker from './CMEditViewLocalePicker';
 
 const CMEditViewInjectedComponents = () => {
@@ -17,7 +20,7 @@ const CMEditViewInjectedComponents = () => {
 
   const id = get(params, 'id', null);
   const currentEntityId = id;
-  const defaultLocale = locales.find(loc => loc.isDefault);
+  const defaultLocale = locales.find((loc) => loc.isDefault);
   const currentLocale = get(query, 'plugins.i18n.locale', defaultLocale.code);
   const hasI18nEnabled = get(layout, ['pluginOptions', 'i18n', 'localized'], false);
   const hasDraftAndPublishEnabled = get(layout, ['options', 'draftAndPublish'], false);

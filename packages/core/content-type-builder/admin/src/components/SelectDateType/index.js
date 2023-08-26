@@ -5,16 +5,17 @@
  */
 
 import React from 'react';
+
+import { Option, Select } from '@strapi/design-system';
 import PropTypes from 'prop-types';
 import { useIntl } from 'react-intl';
-import { Select, Option } from '@strapi/design-system/Select';
 
 const SelectDateType = ({ intlLabel, error, modifiedData, name, onChange, options, value }) => {
   const { formatMessage } = useIntl();
   const label = formatMessage(intlLabel);
   const errorMessage = error ? formatMessage({ id: error, defaultMessage: error }) : '';
 
-  const handleChange = nextValue => {
+  const handleChange = (nextValue) => {
     onChange({ target: { name, value: nextValue, type: 'select' } });
 
     if (!value) {
@@ -38,7 +39,10 @@ const SelectDateType = ({ intlLabel, error, modifiedData, name, onChange, option
       {options.map(({ metadatas: { intlLabel, disabled, hidden }, key, value }) => {
         return (
           <Option key={key} value={value} disabled={disabled} hidden={hidden}>
-            {formatMessage(intlLabel)}
+            {formatMessage(
+              { id: intlLabel.id, defaultMessage: intlLabel.defaultMessage },
+              intlLabel.values
+            )}
           </Option>
         );
       })}

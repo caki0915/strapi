@@ -19,7 +19,12 @@ describe('Metrics', () => {
 
     await metricsService.sendDidInviteUser();
 
-    expect(send).toHaveBeenCalledWith('didInviteUser', { numberOfRoles: 3, numberOfUsers: 2 });
+    expect(send).toHaveBeenCalledWith('didInviteUser', {
+      groupProperties: {
+        numberOfRoles: 3,
+        numberOfUsers: 2,
+      },
+    });
     expect(countUsers).toHaveBeenCalledWith();
     expect(countRoles).toHaveBeenCalledWith();
   });
@@ -33,5 +38,28 @@ describe('Metrics', () => {
     await metricsService.sendDidUpdateRolePermissions();
 
     expect(send).toHaveBeenCalledWith('didUpdateRolePermissions');
+  });
+
+  test('didChangeInterfaceLanguage', async () => {
+    const getLanguagesInUse = jest.fn(() => Promise.resolve(['en', 'fr', 'en']));
+    const send = jest.fn(() => Promise.resolve());
+
+    global.strapi = {
+      telemetry: { send },
+      admin: {
+        services: {
+          user: { getLanguagesInUse },
+        },
+      },
+    };
+
+    await metricsService.sendDidChangeInterfaceLanguage();
+
+    expect(getLanguagesInUse).toHaveBeenCalledWith();
+    expect(send).toHaveBeenCalledWith('didChangeInterfaceLanguage', {
+      userProperties: {
+        languagesInUse: ['en', 'fr', 'en'],
+      },
+    });
   });
 });

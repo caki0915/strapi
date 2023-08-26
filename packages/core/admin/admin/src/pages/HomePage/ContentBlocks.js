@@ -1,12 +1,12 @@
 import React from 'react';
-import styled from 'styled-components';
+
+import { Flex } from '@strapi/design-system';
+import { ContentBox, useTracking } from '@strapi/helper-plugin';
+import { CodeSquare, FeatherSquare, InformationSquare, PlaySquare } from '@strapi/icons';
 import { useIntl } from 'react-intl';
-import { Stack } from '@strapi/design-system/Stack';
-import InformationSquare from '@strapi/icons/InformationSquare';
-import CodeSquare from '@strapi/icons/CodeSquare';
-import PlaySquare from '@strapi/icons/PlaySquare';
-import FeatherSquare from '@strapi/icons/FeatherSquare';
-import { ContentBox } from '@strapi/helper-plugin';
+import styled from 'styled-components';
+
+import CloudBox from './CloudBox';
 
 const BlockLink = styled.a`
   text-decoration: none;
@@ -14,17 +14,24 @@ const BlockLink = styled.a`
 
 const ContentBlocks = () => {
   const { formatMessage } = useIntl();
+  const { trackUsage } = useTracking();
+
+  const handleClick = (eventName) => {
+    trackUsage(eventName);
+  };
 
   return (
-    <Stack size={5}>
+    <Flex direction="column" alignItems="stretch" gap={5}>
+      <CloudBox />
       <BlockLink
         href="https://strapi.io/resource-center"
         target="_blank"
         rel="noopener noreferrer nofollow"
+        onClick={() => handleClick('didClickonReadTheDocumentationSection')}
       >
         <ContentBox
           title={formatMessage({
-            id: 'app.components.BlockLink.documentation',
+            id: 'global.documentation',
             defaultMessage: 'Documentation',
           })}
           subtitle={formatMessage({
@@ -39,6 +46,7 @@ const ContentBlocks = () => {
         href="https://strapi.io/starters"
         target="_blank"
         rel="noopener noreferrer nofollow"
+        onClick={() => handleClick('didClickonCodeExampleSection')}
       >
         <ContentBox
           title={formatMessage({
@@ -57,6 +65,7 @@ const ContentBlocks = () => {
         href="https://strapi.io/blog/categories/tutorials"
         target="_blank"
         rel="noopener noreferrer nofollow"
+        onClick={() => handleClick('didClickonTutorialSection')}
       >
         <ContentBox
           title={formatMessage({
@@ -71,7 +80,12 @@ const ContentBlocks = () => {
           iconBackground="secondary100"
         />
       </BlockLink>
-      <BlockLink href="https://strapi.io/blog" target="_blank" rel="noopener noreferrer nofollow">
+      <BlockLink
+        href="https://strapi.io/blog"
+        target="_blank"
+        rel="noopener noreferrer nofollow"
+        onClick={() => handleClick('didClickonBlogSection')}
+      >
         <ContentBox
           title={formatMessage({
             id: 'app.components.BlockLink.blog',
@@ -85,7 +99,7 @@ const ContentBlocks = () => {
           iconBackground="alternative100"
         />
       </BlockLink>
-    </Stack>
+    </Flex>
   );
 };
 

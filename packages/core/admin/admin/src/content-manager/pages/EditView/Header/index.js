@@ -1,28 +1,37 @@
-import React, { memo, useRef, useState } from 'react';
+import React, { memo, useState } from 'react';
+
+import {
+  Box,
+  Button,
+  Dialog,
+  DialogBody,
+  DialogFooter,
+  Flex,
+  HeaderLayout,
+  Typography,
+} from '@strapi/design-system';
+import { Link } from '@strapi/helper-plugin';
+import { ArrowLeft, Check, ExclamationMarkCircle } from '@strapi/icons';
+import get from 'lodash/get';
+import isEmpty from 'lodash/isEmpty';
+import isEqualFastCompare from 'lodash/isEqual';
+import isEqual from 'lodash/isEqual';
+import PropTypes from 'prop-types';
 import { useIntl } from 'react-intl';
 import { useHistory } from 'react-router-dom';
-import get from 'lodash/get';
-import isEqual from 'lodash/isEqual';
-import isEmpty from 'lodash/isEmpty';
-import ArrowLeft from '@strapi/icons/ArrowLeft';
-import { HeaderLayout } from '@strapi/design-system/Layout';
-import { Box } from '@strapi/design-system/Box';
-import { Button } from '@strapi/design-system/Button';
-import { Dialog, DialogBody, DialogFooter } from '@strapi/design-system/Dialog';
-import { Link } from '@strapi/design-system/Link';
-import { Flex } from '@strapi/design-system/Flex';
-import { Typography } from '@strapi/design-system/Typography';
-import { Stack } from '@strapi/design-system/Stack';
-import ExclamationMarkCircle from '@strapi/icons/ExclamationMarkCircle';
-import Check from '@strapi/icons/Check';
-import PropTypes from 'prop-types';
-import isEqualFastCompare from 'react-fast-compare';
+import styled from 'styled-components';
+
 import { getTrad } from '../../../utils';
-import { connect, getDraftRelations, select } from './utils';
+
+import { connect, select } from './utils';
+
+// TODO: replace with textAlign Typography props when available
+const FlexTextAlign = styled(Flex)`
+  text-align: center;
+`;
 
 const Header = ({
   allowedActions: { canUpdate, canCreate, canPublish },
-  componentLayouts,
   initialData,
   isCreatingEntry,
   isSingleType,
@@ -32,12 +41,12 @@ const Header = ({
   onPublish,
   onUnpublish,
   status,
+  publishConfirmation: { show: showPublishConfirmation, draftCount },
+  onPublishPromptDismissal,
 }) => {
   const { goBack } = useHistory();
   const [showWarningUnpublish, setWarningUnpublish] = useState(false);
-  const [showWarningDraftRelation, setShowWarningDraftRelation] = useState(false);
   const { formatMessage } = useIntl();
-  const draftRelationsCountRef = useRef(0);
 
   const currentContentTypeMainField = get(layout, ['settings', 'mainField'], 'id');
   const currentContentTypeName = get(layout, ['info', 'displayName'], 'NOT FOUND');
@@ -59,31 +68,23 @@ const Header = ({
     title = currentContentTypeName;
   }
 
-  const checkIfHasDraftRelations = () => {
-    const count = getDraftRelations(modifiedData, layout, componentLayouts);
-
-    draftRelationsCountRef.current = count;
-
-    return count;
-  };
-
   let primaryAction = null;
 
   if (isCreatingEntry && canCreate) {
     primaryAction = (
-      <Stack horizontal size={2}>
+      <Flex gap={2}>
         {hasDraftAndPublish && (
           <Button disabled startIcon={<Check />} variant="secondary">
             {formatMessage({ id: 'app.utils.publish', defaultMessage: 'Publish' })}
           </Button>
         )}
-        <Button disabled={!didChangeData} isLoading={status === 'submit-pending'} type="submit">
+        <Button disabled={!didChangeData} loading={status === 'submit-pending'} type="submit">
           {formatMessage({
             id: getTrad('containers.Edit.submit'),
             defaultMessage: 'Save',
           })}
         </Button>
-      </Stack>
+      </Flex>
     );
   }
 
@@ -97,17 +98,7 @@ const Header = ({
       ? { id: 'app.utils.unpublish', defaultMessage: 'Unpublish' }
       : { id: 'app.utils.publish', defaultMessage: 'Publish' };
 
-    /* eslint-disable indent */
-    const onClick = isPublished
-      ? () => setWarningUnpublish(true)
-      : () => {
-          if (checkIfHasDraftRelations() === 0) {
-            onPublish();
-          } else {
-            setShowWarningDraftRelation(true);
-          }
-        };
-    /* eslint-enable indent */
+    const onClick = isPublished ? () => setWarningUnpublish(true) : () => onPublish();
 
     primaryAction = (
       <Flex>
@@ -134,14 +125,7 @@ const Header = ({
     );
   }
 
-  const toggleWarningUnpublish = () => setWarningUnpublish(prevState => !prevState);
-  const toggleWarningDraftRelation = () => setShowWarningDraftRelation(prevState => !prevState);
-
-  const handlePublish = () => {
-    toggleWarningDraftRelation();
-    draftRelationsCountRef.current = 0;
-    onPublish();
-  };
+  const toggleWarningUnpublish = () => setWarningUnpublish((prevState) => !prevState);
 
   const handleUnpublish = () => {
     toggleWarningUnpublish();
@@ -165,131 +149,128 @@ const Header = ({
             // Needed in order to redirect the user with the correct search params
             // Since parts is using a link from react-router-dom the best way to do it is to disable the
             // event
-            onClick={e => {
+            onClick={(e) => {
               e.preventDefault();
               goBack();
             }}
             to="/"
           >
             {formatMessage({
-              id: 'app.components.HeaderLayout.link.go-back',
+              id: 'global.back',
               defaultMessage: 'Back',
             })}
           </Link>
         }
       />
-      {showWarningUnpublish && (
-        <Dialog
-          onClose={toggleWarningUnpublish}
-          title="Confirmation"
-          labelledBy="confirmation"
-          describedBy="confirm-description"
-          isOpen={showWarningUnpublish}
-        >
-          <DialogBody icon={<ExclamationMarkCircle />}>
-            <Stack size={2}>
-              <Flex justifyContent="center" style={{ textAlign: 'center' }}>
-                <Typography id="confirm-description">
-                  {formatMessage(
-                    {
-                      id: getTrad('popUpWarning.warning.unpublish'),
-                      defaultMessage:
-                        'Unpublish this content will automatically change it to a draft.',
-                    },
-                    {
-                      br: () => <br />,
-                    }
-                  )}
-                </Typography>
-              </Flex>
-              <Flex justifyContent="center" style={{ textAlign: 'center' }}>
-                <Typography id="confirm-description">
-                  {formatMessage({
-                    id: getTrad('popUpWarning.warning.unpublish-question'),
-                    defaultMessage: 'Are you sure you want to unpublish it?',
-                  })}
-                </Typography>
-              </Flex>
-            </Stack>
-          </DialogBody>
-          <DialogFooter
-            startAction={
-              <Button onClick={toggleWarningUnpublish} variant="tertiary">
+      <Dialog
+        onClose={toggleWarningUnpublish}
+        title="Confirmation"
+        labelledBy="confirmation"
+        describedBy="confirm-description"
+        isOpen={showWarningUnpublish}
+      >
+        <DialogBody icon={<ExclamationMarkCircle />}>
+          <Flex direction="column" alignItems="stretch" gap={2}>
+            <Flex justifyContent="center" style={{ textAlign: 'center' }}>
+              <Typography id="confirm-description">
+                {formatMessage(
+                  {
+                    id: getTrad('popUpWarning.warning.unpublish'),
+                    defaultMessage:
+                      'Unpublish this content will automatically change it to a draft.',
+                  },
+                  {
+                    br: () => <br />,
+                  }
+                )}
+              </Typography>
+            </Flex>
+            <Flex justifyContent="center" style={{ textAlign: 'center' }}>
+              <Typography id="confirm-description">
                 {formatMessage({
-                  id: 'components.popUpWarning.button.cancel',
-                  defaultMessage: 'No, cancel',
+                  id: getTrad('popUpWarning.warning.unpublish-question'),
+                  defaultMessage: 'Are you sure you want to unpublish it?',
                 })}
-              </Button>
-            }
-            endAction={
-              <Button variant="danger-light" onClick={handleUnpublish}>
+              </Typography>
+            </Flex>
+          </Flex>
+        </DialogBody>
+        <DialogFooter
+          startAction={
+            <Button onClick={toggleWarningUnpublish} variant="tertiary">
+              {formatMessage({
+                id: 'components.popUpWarning.button.cancel',
+                defaultMessage: 'Cancel',
+              })}
+            </Button>
+          }
+          endAction={
+            <Button variant="danger-light" onClick={handleUnpublish}>
+              {formatMessage({
+                id: 'components.popUpWarning.button.confirm',
+                defaultMessage: 'Confirm',
+              })}
+            </Button>
+          }
+        />
+      </Dialog>
+      <Dialog
+        onClose={onPublishPromptDismissal}
+        title={formatMessage({
+          id: getTrad(`popUpWarning.warning.has-draft-relations.title`),
+          defaultMessage: 'Confirmation',
+        })}
+        labelledBy="confirmation"
+        describedBy="confirm-description"
+        isOpen={showPublishConfirmation}
+      >
+        <DialogBody icon={<ExclamationMarkCircle />}>
+          <Flex direction="column" alignItems="stretch" gap={2}>
+            <FlexTextAlign justifyContent="center">
+              <Typography id="confirm-description">
+                {draftCount}
+                {formatMessage(
+                  {
+                    id: getTrad(`popUpwarning.warning.has-draft-relations.message`),
+                    defaultMessage:
+                      '<b>{count, plural, one { relation is} other { relations are}}</b> not published yet and might lead to unexpected behavior.',
+                  },
+                  {
+                    b: (chunks) => <Typography fontWeight="bold">{chunks}</Typography>,
+                    count: draftCount,
+                  }
+                )}
+              </Typography>
+            </FlexTextAlign>
+            <FlexTextAlign justifyContent="center">
+              <Typography id="confirm-description">
                 {formatMessage({
-                  id: 'components.popUpWarning.button.confirm',
-                  defaultMessage: 'Yes, confirm',
+                  id: getTrad('popUpWarning.warning.publish-question'),
+                  defaultMessage: 'Do you still want to publish?',
                 })}
-              </Button>
-            }
-          />
-        </Dialog>
-      )}
-
-      {showWarningDraftRelation && (
-        <Dialog
-          onClose={toggleWarningDraftRelation}
-          title="Confirmation"
-          labelledBy="confirmation"
-          describedBy="confirm-description"
-          isOpen={showWarningDraftRelation}
-        >
-          <DialogBody icon={<ExclamationMarkCircle />}>
-            <Stack size={2}>
-              <Flex justifyContent="center" style={{ textAlign: 'center' }}>
-                <Typography id="confirm-description">
-                  {draftRelationsCountRef.current}
-                  {formatMessage(
-                    {
-                      id: getTrad(`popUpwarning.warning.has-draft-relations.message`),
-                      defaultMessage:
-                        '<b>{count, plural, =0 { of your content relations is} one { of your content relations is} other { of your content relations are}}</b> not published yet.<br></br>It might engender broken links and errors on your project.',
-                    },
-                    {
-                      br: () => <br />,
-                      b: chunks => <Typography fontWeight="bold">{chunks}</Typography>,
-                      count: draftRelationsCountRef.current,
-                    }
-                  )}
-                </Typography>
-              </Flex>
-              <Flex justifyContent="center" style={{ textAlign: 'center' }}>
-                <Typography id="confirm-description">
-                  {formatMessage({
-                    id: getTrad('popUpWarning.warning.publish-question'),
-                    defaultMessage: 'Do you still want to publish it?',
-                  })}
-                </Typography>
-              </Flex>
-            </Stack>
-          </DialogBody>
-          <DialogFooter
-            startAction={
-              <Button onClick={toggleWarningDraftRelation} variant="tertiary">
-                {formatMessage({
-                  id: 'components.popUpWarning.button.cancel',
-                  defaultMessage: 'No, cancel',
-                })}
-              </Button>
-            }
-            endAction={
-              <Button variant="success" onClick={handlePublish}>
-                {formatMessage({
-                  id: getTrad('popUpwarning.warning.has-draft-relations.button-confirm'),
-                  defaultMessage: 'Yes, publish',
-                })}
-              </Button>
-            }
-          />
-        </Dialog>
-      )}
+              </Typography>
+            </FlexTextAlign>
+          </Flex>
+        </DialogBody>
+        <DialogFooter
+          startAction={
+            <Button onClick={onPublishPromptDismissal} variant="tertiary">
+              {formatMessage({
+                id: 'components.popUpWarning.button.cancel',
+                defaultMessage: 'Cancel',
+              })}
+            </Button>
+          }
+          endAction={
+            <Button variant="success" onClick={onPublish}>
+              {formatMessage({
+                id: getTrad('popUpwarning.warning.has-draft-relations.button-confirm'),
+                defaultMessage: 'Publish',
+              })}
+            </Button>
+          }
+        />
+      </Dialog>
     </>
   );
 };
@@ -300,7 +281,6 @@ Header.propTypes = {
     canCreate: PropTypes.bool.isRequired,
     canPublish: PropTypes.bool.isRequired,
   }).isRequired,
-  componentLayouts: PropTypes.object.isRequired,
   initialData: PropTypes.object.isRequired,
   isCreatingEntry: PropTypes.bool.isRequired,
   isSingleType: PropTypes.bool.isRequired,
@@ -310,12 +290,14 @@ Header.propTypes = {
   modifiedData: PropTypes.object.isRequired,
   onPublish: PropTypes.func.isRequired,
   onUnpublish: PropTypes.func.isRequired,
+  publishConfirmation: PropTypes.shape({
+    show: PropTypes.bool.isRequired,
+    draftCount: PropTypes.number.isRequired,
+  }).isRequired,
+  onPublishPromptDismissal: PropTypes.func.isRequired,
 };
 
 const Memoized = memo(Header, isEqualFastCompare);
 
-export default connect(
-  Memoized,
-  select
-);
+export default connect(Memoized, select);
 export { Header };

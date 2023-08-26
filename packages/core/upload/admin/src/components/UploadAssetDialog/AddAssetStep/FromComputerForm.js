@@ -1,18 +1,16 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
 import React, { useRef, useState } from 'react';
-import PropTypes from 'prop-types';
-import styled from 'styled-components';
-import { Box } from '@strapi/design-system/Box';
-import { Flex } from '@strapi/design-system/Flex';
-import { Typography } from '@strapi/design-system/Typography';
+
+import { Box, Button, Flex, ModalFooter, Typography } from '@strapi/design-system';
 import { useTracking } from '@strapi/helper-plugin';
-import { ModalFooter } from '@strapi/design-system/ModalLayout';
-import { Button } from '@strapi/design-system/Button';
-import PicturePlus from '@strapi/icons/PicturePlus';
+import { PicturePlus } from '@strapi/icons';
+import PropTypes from 'prop-types';
 import { useIntl } from 'react-intl';
+import styled from 'styled-components';
+
+import { AssetSource } from '../../../constants';
 import getTrad from '../../../utils/getTrad';
 import { rawFileToAsset } from '../../../utils/rawFileToAsset';
-import { AssetSource } from '../../../constants';
 
 const Wrapper = styled(Flex)`
   flex-direction: column;
@@ -41,10 +39,18 @@ export const FromComputerForm = ({ onClose, onAddAssets, trackedLocation }) => {
   const inputRef = useRef(null);
   const { trackUsage } = useTracking();
 
-  const handleDragEnter = () => setDragOver(true);
+  const handleDragOver = (event) => {
+    event.preventDefault();
+  };
+
+  const handleDragEnter = (event) => {
+    event.preventDefault();
+    setDragOver(true);
+  };
+
   const handleDragLeave = () => setDragOver(false);
 
-  const handleClick = e => {
+  const handleClick = (e) => {
     e.preventDefault();
     inputRef.current.click();
   };
@@ -67,6 +73,26 @@ export const FromComputerForm = ({ onClose, onAddAssets, trackedLocation }) => {
     onAddAssets(assets);
   };
 
+  const handleDrop = (e) => {
+    e.preventDefault();
+
+    if (e?.dataTransfer?.files) {
+      const files = e.dataTransfer.files;
+      const assets = [];
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files.item(i);
+        const asset = rawFileToAsset(file, AssetSource.Computer);
+
+        assets.push(asset);
+      }
+
+      onAddAssets(assets);
+    }
+
+    setDragOver(false);
+  };
+
   return (
     <form>
       <Box paddingLeft={8} paddingRight={8} paddingTop={6} paddingBottom={6}>
@@ -81,6 +107,8 @@ export const FromComputerForm = ({ onClose, onAddAssets, trackedLocation }) => {
             position="relative"
             onDragEnter={handleDragEnter}
             onDragLeave={handleDragLeave}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
           >
             <Flex justifyContent="center">
               <Wrapper>

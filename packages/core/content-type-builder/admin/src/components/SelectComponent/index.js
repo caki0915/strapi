@@ -5,9 +5,11 @@
  */
 
 import React from 'react';
-import { useIntl } from 'react-intl';
+
+import { Option, Select } from '@strapi/design-system';
 import PropTypes from 'prop-types';
-import { Select, Option } from '@strapi/design-system/Select';
+import { useIntl } from 'react-intl';
+
 import useDataManager from '../../hooks/useDataManager';
 
 const SelectComponent = ({
@@ -27,16 +29,14 @@ const SelectComponent = ({
   const errorMessage = error ? formatMessage({ id: error, defaultMessage: error }) : '';
   const label = formatMessage(intlLabel);
 
-  const {
-    componentsGroupedByCategory,
-    componentsThatHaveOtherComponentInTheirAttributes,
-  } = useDataManager();
+  const { componentsGroupedByCategory, componentsThatHaveOtherComponentInTheirAttributes } =
+    useDataManager();
 
   const isTargetAComponent = ['component', 'components'].includes(forTarget);
 
   let options = Object.entries(componentsGroupedByCategory).reduce((acc, current) => {
     const [categoryName, components] = current;
-    const compos = components.map(component => {
+    const compos = components.map((component) => {
       return {
         uid: component.uid,
         label: component.schema.displayName,
@@ -48,13 +48,13 @@ const SelectComponent = ({
   }, []);
 
   if (isAddingAComponentToAnotherComponent) {
-    options = options.filter(option => {
+    options = options.filter((option) => {
       return !componentsThatHaveOtherComponentInTheirAttributes.includes(option.uid);
     });
   }
 
   if (isTargetAComponent) {
-    options = options.filter(option => {
+    options = options.filter((option) => {
       return option.uid !== targetUid;
     });
   }
@@ -76,12 +76,12 @@ const SelectComponent = ({
       label={label}
       id={name}
       name={name}
-      onChange={value => {
+      onChange={(value) => {
         onChange({ target: { name, value, type: 'select-category' } });
       }}
       value={value || ''}
     >
-      {options.map(option => {
+      {options.map((option) => {
         return (
           <Option key={option.uid} value={option.uid}>
             {`${option.categoryName} - ${option.label}`}

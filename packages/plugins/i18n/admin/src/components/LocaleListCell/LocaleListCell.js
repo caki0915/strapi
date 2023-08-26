@@ -1,15 +1,13 @@
-import React, { useState, useRef } from 'react';
-import PropTypes from 'prop-types';
-import styled from 'styled-components';
-import { useIntl } from 'react-intl';
-import { useSelector } from 'react-redux';
-import { Flex } from '@strapi/design-system/Flex';
-import { Box } from '@strapi/design-system/Box';
-import { Tooltip } from '@strapi/design-system/Tooltip';
-import { Typography } from '@strapi/design-system/Typography';
-import { Popover } from '@strapi/design-system/Popover';
+import React, { useRef, useState } from 'react';
+
+import { Box, Flex, Popover, Tooltip, Typography } from '@strapi/design-system';
 import { SortIcon, stopPropagation } from '@strapi/helper-plugin';
 import get from 'lodash/get';
+import PropTypes from 'prop-types';
+import { useIntl } from 'react-intl';
+import { useSelector } from 'react-redux';
+import styled from 'styled-components';
+
 import selectI18NLocales from '../../selectors/selectI18nLocales';
 import { getTrad } from '../../utils';
 
@@ -50,13 +48,17 @@ const ActionWrapper = styled.div`
 `;
 
 const mapToLocaleName = (locales, localeCode) =>
-  get(locales.find(({ code }) => code === localeCode), 'name', localeCode);
+  get(
+    locales.find(({ code }) => code === localeCode),
+    'name',
+    localeCode
+  );
 
 const LocaleListCell = ({ localizations, locale: currentLocaleCode, id }) => {
   const locales = useSelector(selectI18NLocales);
   const allLocalizations = [{ locale: currentLocaleCode }, ...localizations];
-  const localizationNames = allLocalizations.map(locale => locale.locale);
-  const defaultLocale = locales.find(locale => locale.isDefault);
+  const localizationNames = allLocalizations.map((locale) => locale.locale);
+  const defaultLocale = locales.find((locale) => locale.isDefault);
   const hasDefaultLocale = localizationNames.includes(defaultLocale.code);
   const [visible, setVisible] = useState(false);
   const buttonRef = useRef();
@@ -66,9 +68,9 @@ const LocaleListCell = ({ localizations, locale: currentLocaleCode, id }) => {
 
   if (hasDefaultLocale) {
     const ctLocalesWithoutDefault = localizationNames.filter(
-      locale => locale !== defaultLocale.code
+      (locale) => locale !== defaultLocale.code
     );
-    const ctLocalesNamesWithoutDefault = ctLocalesWithoutDefault.map(locale =>
+    const ctLocalesNamesWithoutDefault = ctLocalesWithoutDefault.map((locale) =>
       mapToLocaleName(locales, locale)
     );
 
@@ -81,13 +83,13 @@ const LocaleListCell = ({ localizations, locale: currentLocaleCode, id }) => {
 
     localesArray = ctLocalesNamesWithDefault;
   } else {
-    const ctLocales = localizationNames.map(locale => mapToLocaleName(locales, locale));
+    const ctLocales = localizationNames.map((locale) => mapToLocaleName(locales, locale));
     ctLocales.sort();
 
     localesArray = ctLocales;
   }
 
-  const handleTogglePopover = () => setVisible(prev => !prev);
+  const handleTogglePopover = () => setVisible((prev) => !prev);
 
   const elId = `entry-${id}__locale`;
   const localesNames = localesArray.join(', ');
@@ -115,9 +117,9 @@ const LocaleListCell = ({ localizations, locale: currentLocaleCode, id }) => {
               <SortIcon />
 
               {visible && (
-                <Popover source={buttonRef} spacing={16} centered>
+                <Popover onDismiss={handleTogglePopover} source={buttonRef} spacing={16} centered>
                   <ul>
-                    {localesArray.map(name => (
+                    {localesArray.map((name) => (
                       <Box key={name} padding={3} as="li">
                         <Typography>{name}</Typography>
                       </Box>

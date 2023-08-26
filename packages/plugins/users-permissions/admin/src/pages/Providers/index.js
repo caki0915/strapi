@@ -1,120 +1,132 @@
-import React, { useMemo, useRef, useState } from 'react';
-import { useIntl } from 'react-intl';
+import * as React from 'react';
+
 import {
-  SettingsPageTitle,
+  ContentLayout,
+  HeaderLayout,
+  IconButton,
+  Layout,
+  Main,
+  Table,
+  Tbody,
+  Td,
+  Th,
+  Thead,
+  Tr,
+  Typography,
+  VisuallyHidden,
+} from '@strapi/design-system';
+import {
+  CheckPagePermissions,
   LoadingIndicatorPage,
-  useTracking,
+  onRowClick,
+  SettingsPageTitle,
+  stopPropagation,
+  useAPIErrorHandler,
+  useCollator,
+  useFetchClient,
+  useFocusWhenNavigate,
   useNotification,
   useOverlayBlocker,
-  CheckPagePermissions,
   useRBAC,
-  useFocusWhenNavigate,
-  onRowClick,
-  stopPropagation,
+  useTracking,
 } from '@strapi/helper-plugin';
-import has from 'lodash/has';
+import { Pencil } from '@strapi/icons';
 import upperFirst from 'lodash/upperFirst';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { HeaderLayout, Layout, ContentLayout } from '@strapi/design-system/Layout';
-import { Main } from '@strapi/design-system/Main';
-import { useNotifyAT } from '@strapi/design-system/LiveRegions';
-import { Table, Thead, Tr, Th, Tbody, Td } from '@strapi/design-system/Table';
-import { Typography } from '@strapi/design-system/Typography';
-import { VisuallyHidden } from '@strapi/design-system/VisuallyHidden';
-import { IconButton } from '@strapi/design-system/IconButton';
-import Pencil from '@strapi/icons/Pencil';
-import { useQuery, useMutation, useQueryClient } from 'react-query';
-import forms from './utils/forms';
-import { fetchData, putProvider } from './utils/api';
-import createProvidersArray from './utils/createProvidersArray';
-import { getTrad } from '../../utils';
-import pluginPermissions from '../../permissions';
+import { useIntl } from 'react-intl';
+import { useMutation, useQuery, useQueryClient } from 'react-query';
+
 import FormModal from '../../components/FormModal';
+import { PERMISSIONS } from '../../constants';
+import { getTrad } from '../../utils';
+
+import forms from './utils/forms';
 
 export const ProvidersPage = () => {
-  const { formatMessage } = useIntl();
-  useFocusWhenNavigate();
-  const { notifyStatus } = useNotifyAT();
+  const { formatMessage, locale } = useIntl();
   const queryClient = useQueryClient();
   const { trackUsage } = useTracking();
-  const trackUsageRef = useRef(trackUsage);
-  const [isOpen, setIsOpen] = useState(false);
-  const [isSubmiting, setIsSubmiting] = useState(false);
-  const [providerToEditName, setProviderToEditName] = useState(null);
+  const [isOpen, setIsOpen] = React.useState(false);
+  const [providerToEditName, setProviderToEditName] = React.useState(null);
   const toggleNotification = useNotification();
   const { lockApp, unlockApp } = useOverlayBlocker();
+  const { get, put } = useFetchClient();
+  const { formatAPIError } = useAPIErrorHandler();
+  const formatter = useCollator(locale, {
+    sensitivity: 'base',
+  });
 
-  const updatePermissions = useMemo(() => {
-    return { update: pluginPermissions.updateProviders };
-  }, []);
+  useFocusWhenNavigate();
 
   const {
-    isLoading: isLoadingForPermissions,
+    isLoading: isLoadingPermissions,
     allowedActions: { canUpdate },
-  } = useRBAC(updatePermissions);
+  } = useRBAC({ update: PERMISSIONS.updateProviders });
 
-  const { isLoading: isLoadingForData, data: modifiedData, isFetching } = useQuery(
-    'get-providers',
-    () => fetchData(toggleNotification),
+  const { isLoading: isLoadingData, data } = useQuery(
+    ['users-permissions', 'get-providers'],
+    async () => {
+      const { data } = await get('/users-permissions/providers');
+
+      return data;
+    },
     {
-      onSuccess: () => {
-        notifyStatus(
-          formatMessage({
-            id: getTrad('Providers.data.loaded'),
-            defaultMessage: 'Providers have been loaded',
-          })
-        );
-      },
       initialData: {},
     }
   );
 
-  const isLoading = isLoadingForData || isFetching;
+  const submitMutation = useMutation((body) => put('/users-permissions/providers', body), {
+    async onSuccess() {
+      await queryClient.invalidateQueries(['users-permissions', 'providers']);
 
-  const submitMutation = useMutation(putProvider, {
-    onSuccess: async () => {
-      await queryClient.invalidateQueries('get-providers');
       toggleNotification({
-        type: 'info',
+        type: 'success',
         message: { id: getTrad('notification.success.submit') },
       });
 
-      trackUsageRef.current('didEditAuthenticationProvider');
-      setIsSubmiting(false);
+      trackUsage('didEditAuthenticationProvider');
+
       handleToggleModal();
       unlockApp();
     },
-    onError: () => {
+    onError(error) {
       toggleNotification({
         type: 'warning',
-        message: { id: 'notification.error' },
+        message: formatAPIError(error),
       });
+
       unlockApp();
-      setIsSubmiting(false);
     },
     refetchActive: false,
   });
 
-  const providers = useMemo(() => createProvidersArray(modifiedData), [modifiedData]);
+  const providers = Object.entries(data)
+    .reduce((acc, [name, provider]) => {
+      const { icon, enabled, subdomain } = provider;
 
-  const rowCount = providers.length;
+      acc.push({
+        name,
+        icon: icon === 'envelope' ? ['fas', 'envelope'] : ['fab', icon],
+        enabled,
+        subdomain,
+      });
 
-  const isProviderWithSubdomain = useMemo(() => {
+      return acc;
+    }, [])
+    .sort((a, b) => formatter.compare(a.name, b.name));
+
+  const isLoading = isLoadingData || isLoadingPermissions;
+
+  const isProviderWithSubdomain = React.useMemo(() => {
     if (!providerToEditName) {
       return false;
     }
 
-    const providerToEdit = providers.find(obj => obj.name === providerToEditName);
+    const providerToEdit = providers.find((obj) => obj.name === providerToEditName);
 
-    return has(providerToEdit, 'subdomain');
+    return !!providerToEdit?.subdomain;
   }, [providers, providerToEditName]);
 
-  const pageTitle = formatMessage({
-    id: getTrad('HeaderNav.link.providers'),
-    defaultMessage: 'Providers',
-  });
-
-  const layoutToRender = useMemo(() => {
+  const layoutToRender = React.useMemo(() => {
     if (providerToEditName === 'email') {
       return forms.email;
     }
@@ -127,31 +139,32 @@ export const ProvidersPage = () => {
   }, [providerToEditName, isProviderWithSubdomain]);
 
   const handleToggleModal = () => {
-    setIsOpen(prev => !prev);
+    setIsOpen((prev) => !prev);
   };
 
-  const handleClickEdit = provider => {
+  const handleClickEdit = (provider) => {
     if (canUpdate) {
       setProviderToEditName(provider.name);
       handleToggleModal();
     }
   };
 
-  const handleSubmit = async values => {
-    setIsSubmiting(true);
-
+  const handleSubmit = async (values) => {
     lockApp();
 
-    trackUsageRef.current('willEditAuthenticationProvider');
+    trackUsage('willEditAuthenticationProvider');
 
-    const body = { ...modifiedData, [providerToEditName]: values };
-
-    submitMutation.mutate({ providers: body });
+    submitMutation.mutate({ providers: { ...data, [providerToEditName]: values } });
   };
 
   return (
     <Layout>
-      <SettingsPageTitle name={pageTitle} />
+      <SettingsPageTitle
+        name={formatMessage({
+          id: getTrad('HeaderNav.link.providers'),
+          defaultMessage: 'Providers',
+        })}
+      />
       <Main>
         <HeaderLayout
           title={formatMessage({
@@ -159,23 +172,16 @@ export const ProvidersPage = () => {
             defaultMessage: 'Providers',
           })}
         />
-        {isLoading || isLoadingForPermissions ? (
+        {isLoading ? (
           <LoadingIndicatorPage />
         ) : (
           <ContentLayout>
-            <Table colCount={4} rowCount={rowCount + 1}>
+            <Table colCount={3} rowCount={providers.length + 1}>
               <Thead>
                 <Tr>
                   <Th>
                     <Typography variant="sigma" textColor="neutral600">
-                      <VisuallyHidden>
-                        {formatMessage({ id: getTrad('Providers.image'), defaultMessage: 'Image' })}
-                      </VisuallyHidden>
-                    </Typography>
-                  </Th>
-                  <Th>
-                    <Typography variant="sigma" textColor="neutral600">
-                      {formatMessage({ id: getTrad('Providers.name'), defaultMessage: 'Name' })}
+                      {formatMessage({ id: 'global.name', defaultMessage: 'Name' })}
                     </Typography>
                   </Th>
                   <Th>
@@ -187,7 +193,7 @@ export const ProvidersPage = () => {
                     <Typography variant="sigma">
                       <VisuallyHidden>
                         {formatMessage({
-                          id: getTrad('Providers.settings'),
+                          id: 'global.settings',
                           defaultMessage: 'Settings',
                         })}
                       </VisuallyHidden>
@@ -196,7 +202,7 @@ export const ProvidersPage = () => {
                 </Tr>
               </Thead>
               <Tbody>
-                {providers.map(provider => (
+                {providers.map((provider) => (
                   <Tr
                     key={provider.name}
                     {...onRowClick({
@@ -204,9 +210,6 @@ export const ProvidersPage = () => {
                       condition: canUpdate,
                     })}
                   >
-                    <Td width="">
-                      <FontAwesomeIcon icon={provider.icon} />
-                    </Td>
                     <Td width="45%">
                       <Typography fontWeight="semiBold" textColor="neutral800">
                         {provider.name}
@@ -219,11 +222,11 @@ export const ProvidersPage = () => {
                       >
                         {provider.enabled
                           ? formatMessage({
-                              id: getTrad('Providers.enabled'),
+                              id: 'global.enabled',
                               defaultMessage: 'Enabled',
                             })
                           : formatMessage({
-                              id: getTrad('Providers.disabled'),
+                              id: 'global.disabled',
                               defaultMessage: 'Disabled',
                             })}
                       </Typography>
@@ -246,9 +249,9 @@ export const ProvidersPage = () => {
         )}
       </Main>
       <FormModal
-        initialData={modifiedData[providerToEditName]}
+        initialData={data[providerToEditName]}
         isOpen={isOpen}
-        isSubmiting={isSubmiting}
+        isSubmiting={submitMutation.isLoading}
         layout={layoutToRender}
         headerBreadcrumbs={[
           formatMessage({
@@ -266,7 +269,7 @@ export const ProvidersPage = () => {
 };
 
 const ProtectedProvidersPage = () => (
-  <CheckPagePermissions permissions={pluginPermissions.readProviders}>
+  <CheckPagePermissions permissions={PERMISSIONS.readProviders}>
     <ProvidersPage />
   </CheckPagePermissions>
 );

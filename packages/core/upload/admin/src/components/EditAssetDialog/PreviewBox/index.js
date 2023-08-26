@@ -1,31 +1,33 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+
+import { Flex, IconButton } from '@strapi/design-system';
+import { useTracking } from '@strapi/helper-plugin';
+import { Crop as Resize, Download as DownloadIcon, Trash } from '@strapi/icons';
 import PropTypes from 'prop-types';
 import { useIntl } from 'react-intl';
-import { Stack } from '@strapi/design-system/Stack';
-import { IconButton } from '@strapi/design-system/IconButton';
-import Trash from '@strapi/icons/Trash';
-import DownloadIcon from '@strapi/icons/Download';
-import Resize from '@strapi/icons/Crop';
-import { useTracking } from '@strapi/helper-plugin';
-import getTrad from '../../../utils/getTrad';
-import { downloadFile } from '../../../utils/downloadFile';
-import { RemoveAssetDialog } from '../RemoveAssetDialog';
+
+import { AssetDefinition, AssetType } from '../../../constants';
 import { useCropImg } from '../../../hooks/useCropImg';
 import { useEditAsset } from '../../../hooks/useEditAsset';
 import { useUpload } from '../../../hooks/useUpload';
-import {
-  RelativeBox,
-  ActionRow,
-  Wrapper,
-  BadgeOverride,
-  UploadProgressWrapper,
-} from './components';
-import { CroppingActions } from './CroppingActions';
+import { createAssetUrl } from '../../../utils';
+import { downloadFile } from '../../../utils/downloadFile';
+import getTrad from '../../../utils/getTrad';
 import { CopyLinkButton } from '../../CopyLinkButton';
 import { UploadProgress } from '../../UploadProgress';
-import { AssetType, AssetDefinition } from '../../../constants';
+import { RemoveAssetDialog } from '../RemoveAssetDialog';
+
 import { AssetPreview } from './AssetPreview';
-import { createAssetUrl } from '../../../utils/createAssetUrl';
+import {
+  ActionRow,
+  BadgeOverride,
+  RelativeBox,
+  UploadProgressWrapper,
+  Wrapper,
+} from './components';
+import { CroppingActions } from './CroppingActions';
+
+import 'cropperjs/dist/cropper.css';
 
 export const PreviewBox = ({
   asset,
@@ -41,19 +43,14 @@ export const PreviewBox = ({
 }) => {
   const { trackUsage } = useTracking();
   const previewRef = useRef(null);
+  const [isCropImageReady, setIsCropImageReady] = useState(false);
+  const [hasCropIntent, setHasCropIntent] = useState(null);
   const [assetUrl, setAssetUrl] = useState(createAssetUrl(asset, false));
   const [thumbnailUrl, setThumbnailUrl] = useState(createAssetUrl(asset, true));
   const { formatMessage } = useIntl();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const {
-    crop,
-    produceFile,
-    stopCropping,
-    isCropping,
-    isCropperReady,
-    width,
-    height,
-  } = useCropImg();
+  const { crop, produceFile, stopCropping, isCropping, isCropperReady, width, height } =
+    useCropImg();
   const { editAsset, error, isLoading, progress, cancel } = useEditAsset();
 
   const {
@@ -73,13 +70,28 @@ export const PreviewBox = ({
       if (asset.isLocal) {
         asset.url = fileLocalUrl;
       }
+
       setAssetUrl(fileLocalUrl);
       setThumbnailUrl(fileLocalUrl);
     }
   }, [replacementFile, asset]);
 
+  useEffect(() => {
+    if (hasCropIntent === false) {
+      stopCropping();
+      onCropCancel();
+    }
+  }, [hasCropIntent, stopCropping, onCropCancel, onCropFinish]);
+
+  useEffect(() => {
+    if (hasCropIntent && isCropImageReady) {
+      crop(previewRef.current);
+      onCropStart();
+    }
+  }, [isCropImageReady, hasCropIntent, onCropStart, crop]);
+
   const handleCropping = async () => {
-    const nextAsset = { ...asset, width, height };
+    const nextAsset = { ...asset, width, height, folder: asset.folder?.id };
     const file = await produceFile(nextAsset.name, nextAsset.mime, nextAsset.updatedAt);
 
     // Making sure that when persisting the new asset, the URL changes with width and height
@@ -102,10 +114,9 @@ export const PreviewBox = ({
       trackUsage('didCropFile', { duplicatedFile: false, location: trackedLocation });
     }
 
-    stopCropping();
-    onCropCancel();
     setAssetUrl(optimizedCachingImage);
     setThumbnailUrl(optimizedCachingThumbnailImage);
+    setHasCropIntent(false);
   };
 
   const isInCroppingMode = isCropping && !isLoading;
@@ -114,22 +125,20 @@ export const PreviewBox = ({
     const nextAsset = { ...asset, width, height };
     const file = await produceFile(nextAsset.name, nextAsset.mime, nextAsset.updatedAt);
 
-    await upload(file);
+    await upload({ name: file.name, rawFile: file }, asset.folder?.id);
 
     trackUsage('didCropFile', { duplicatedFile: true, location: trackedLocation });
 
-    stopCropping();
+    setHasCropIntent(false);
     onCropFinish();
   };
 
   const handleCropCancel = () => {
-    stopCropping();
-    onCropCancel();
+    setHasCropIntent(false);
   };
 
   const handleCropStart = () => {
-    crop(previewRef.current);
-    onCropStart();
+    setHasCropIntent(true);
   };
 
   return (
@@ -144,11 +153,11 @@ export const PreviewBox = ({
         )}
 
         <ActionRow paddingLeft={3} paddingRight={3} justifyContent="flex-end">
-          <Stack size={1} horizontal>
+          <Flex gap={1}>
             {canUpdate && !asset.isLocal && (
               <IconButton
                 label={formatMessage({
-                  id: getTrad('app.utils.delete'),
+                  id: 'global.delete',
                   defaultMessage: 'Delete',
                 })}
                 icon={<Trash />}
@@ -176,7 +185,7 @@ export const PreviewBox = ({
                 onClick={handleCropStart}
               />
             )}
-          </Stack>
+          </Flex>
         </ActionRow>
 
         <Wrapper>
@@ -198,7 +207,17 @@ export const PreviewBox = ({
             </UploadProgressWrapper>
           )}
 
-          <AssetPreview ref={previewRef} mime={asset.mime} name={asset.name} url={thumbnailUrl} />
+          <AssetPreview
+            ref={previewRef}
+            mime={asset.mime}
+            name={asset.name}
+            url={hasCropIntent ? assetUrl : thumbnailUrl}
+            onLoad={() => {
+              if (asset.isLocal || hasCropIntent) {
+                setIsCropImageReady(true);
+              }
+            }}
+          />
         </Wrapper>
 
         <ActionRow

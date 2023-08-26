@@ -5,13 +5,14 @@
  */
 
 import React from 'react';
-import { useTracking, CheckPermissions } from '@strapi/helper-plugin';
-import { useIntl } from 'react-intl';
+
+import { CheckPermissions, LinkButton, useTracking } from '@strapi/helper-plugin';
+import { Pencil } from '@strapi/icons';
 import get from 'lodash/get';
-import { LinkButton } from '@strapi/design-system/LinkButton';
-import Pencil from '@strapi/icons/Pencil';
+import { useIntl } from 'react-intl';
+
 import getTrad from '../../../utils/getTrad';
-import useLayoutDnd from '../../../hooks/useLayoutDnd';
+import { useLayoutDnd } from '../hooks/useLayoutDnd';
 
 const permissions = [{ action: 'plugin::content-type-builder.read', subject: null }];
 

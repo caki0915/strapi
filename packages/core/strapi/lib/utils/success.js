@@ -5,7 +5,7 @@
  */
 
 const fetch = require('node-fetch');
-const { machineIdSync } = require('node-machine-id');
+const machineID = require('./machine-id');
 
 /*
  * No need to worry about this file, we only retrieve anonymous data here.
@@ -17,15 +17,19 @@ try {
     process.env.npm_config_global === 'true' ||
     JSON.parse(process.env.npm_config_argv).original.includes('global')
   ) {
-    fetch('https://analytics.strapi.io/track', {
+    const event = 'didInstallStrapi';
+    fetch('https://analytics.strapi.io/api/v2/track', {
       method: 'POST',
       body: JSON.stringify({
-        event: 'didInstallStrapi',
-        deviceId: machineIdSync(),
+        event,
+        deviceId: machineID(),
       }),
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Strapi-Event': event,
+      },
     }).catch(() => {});
   }
 } catch (e) {
-  //...
+  // ...
 }

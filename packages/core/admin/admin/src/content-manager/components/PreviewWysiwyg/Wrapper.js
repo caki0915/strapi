@@ -9,9 +9,8 @@ const Wrapper = styled.div`
   padding: ${({ theme }) => `${theme.spaces[3]} ${theme.spaces[4]}`};
   font-size: ${14 / 16}rem;
   background-color: ${({ theme }) => theme.colors.neutral0};
-  z-index: 2;
-  cursor: not-allowed;
   color: ${({ theme }) => theme.colors.neutral800};
+  line-height: ${({ theme }) => theme.lineHeights[6]};
 
   h1,
   h2,
@@ -19,8 +18,12 @@ const Wrapper = styled.div`
   h4,
   h5,
   h6 {
-    margin-block-start: 10px;
-    margin-block-end: 10px;
+    margin-block-start: ${({ theme }) => theme.spaces[2]};
+    margin-block-end: ${({ theme }) => theme.spaces[2]};
+  }
+
+  p {
+    margin-bottom: ${({ theme }) => theme.spaces[2]};
   }
 
   h1 {
@@ -47,14 +50,18 @@ const Wrapper = styled.div`
     font-weight: 800;
   }
 
+  em {
+    font-style: italic;
+  }
+
   blockquote {
-    margin-top: 41px;
-    margin-bottom: 34px;
+    margin-top: ${({ theme }) => theme.spaces[8]};
+    margin-bottom: ${({ theme }) => theme.spaces[7]};
     font-size: ${14 / 16}rem;
     font-weight: 400;
-    border-left: 5px solid #eee;
+    border-left: 4px solid ${({ theme }) => theme.colors.neutral150};
     font-style: italic;
-    padding: 10px 20px;
+    padding: ${({ theme }) => theme.spaces[2]} ${({ theme }) => theme.spaces[5]};
   }
 
   img {
@@ -62,36 +69,39 @@ const Wrapper = styled.div`
   }
 
   table {
-    font-size: 13px;
     thead {
-      background: rgb(243, 243, 243);
-      tr {
-        height: 43px;
+      background: ${({ theme }) => theme.colors.neutral150};
+
+      th {
+        padding: ${({ theme }) => theme.spaces[4]};
       }
     }
     tr {
-      border: 1px solid #c6cbd1;
+      border: 1px solid ${({ theme }) => theme.colors.neutral200};
     }
     th,
     td {
-      padding: 0 25px;
-      border: 1px solid #c6cbd1;
+      padding: ${({ theme }) => theme.spaces[4]};
+      border: 1px solid ${({ theme }) => theme.colors.neutral200};
       border-bottom: 0;
       border-top: 0;
-    }
-
-    tbody {
-      tr {
-        height: 54px;
-      }
     }
   }
 
   pre,
   code {
-    font-size: 13px;
-    border-radius: 3px;
-    background-color: #002b36;
+    font-size: ${14 / 16}rem;
+    border-radius: 4px;
+    /* 
+      Hard coded since the color is the same between themes,
+      theme.colors.neutral800 changes between themes.
+
+      Matches the color of the JSON Input component.
+    */
+    background-color: #32324d;
+    max-width: 100%;
+    overflow: auto;
+    padding: ${({ theme }) => theme.spaces[2]};
   }
 
   /* Inline code */
@@ -103,21 +113,6 @@ const Wrapper = styled.div`
     }
   }
 
-  .warning {
-    background-color: #faa684;
-    padding: 30px;
-    border-radius: 3px;
-  }
-  .tip {
-    padding: 30px;
-    border-radius: 3px;
-  }
-
-  .footnote-ref,
-  .footnote-backref {
-    color: #007bff;
-  }
-
   ol {
     list-style-type: decimal;
     margin-block-start: ${({ theme }) => theme.spaces[4]};
@@ -125,6 +120,7 @@ const Wrapper = styled.div`
     margin-inline-start: 0px;
     margin-inline-end: 0px;
     padding-inline-start: ${({ theme }) => theme.spaces[4]};
+
     ol,
     ul {
       margin-block-start: 0px;
@@ -139,6 +135,7 @@ const Wrapper = styled.div`
     margin-inline-start: 0px;
     margin-inline-end: 0px;
     padding-inline-start: ${({ theme }) => theme.spaces[4]};
+
     ul,
     ol {
       margin-block-start: 0px;

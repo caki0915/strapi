@@ -1,18 +1,16 @@
 'use strict';
 
 const _ = require('lodash');
-const { yup, webhook: webhookUtils, validateYupSchema } = require('@strapi/utils');
+const { yup, validateYupSchema } = require('@strapi/utils');
 
-const urlRegex = /^(?:([a-z0-9+.-]+):\/\/)(?:\S+(?::\S*)?@)?(?:(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9_]-*)*[a-z\u00a1-\uffff0-9_]+)(?:\.(?:[a-z\u00a1-\uffff0-9_]-*)*[a-z\u00a1-\uffff0-9_]+)*\.?)(?::\d{2,5})?(?:[/?#]\S*)?$/;
+const urlRegex =
+  /^(?:([a-z0-9+.-]+):\/\/)(?:\S+(?::\S*)?@)?(?:(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9_]-*)*[a-z\u00a1-\uffff0-9_]+)(?:\.(?:[a-z\u00a1-\uffff0-9_]-*)*[a-z\u00a1-\uffff0-9_]+)*\.?)(?::\d{2,5})?(?:[/?#]\S*)?$/;
 
 const webhookValidator = yup
   .object({
     name: yup.string().required(),
-    url: yup
-      .string()
-      .matches(urlRegex, 'url must be a valid URL')
-      .required(),
-    headers: yup.lazy(data => {
+    url: yup.string().matches(urlRegex, 'url must be a valid URL').required(),
+    headers: yup.lazy((data) => {
       if (typeof data !== 'object') {
         return yup.object().required();
       }
@@ -20,24 +18,12 @@ const webhookValidator = yup
       return yup
         .object(
           _.mapValues(data, () => {
-            yup
-              .string()
-              .min(1)
-              .required();
+            yup.string().min(1).required();
           })
         )
         .required();
     }),
-    events: yup
-      .array()
-      .of(
-        yup
-          .string()
-          .oneOf(_.values(webhookUtils.webhookEvents))
-          .required()
-      )
-      .min(1)
-      .required(),
+    events: yup.array().of(yup.string()).required(),
   })
   .noUnknown();
 
@@ -125,10 +111,10 @@ module.exports = {
     for (const id of ids) {
       const webhook = await strapi.webhookStore.findWebhook(id);
 
-      if (!webhook) continue;
-
-      await strapi.webhookStore.deleteWebhook(id);
-      strapi.webhookRunner.remove(webhook);
+      if (webhook) {
+        await strapi.webhookStore.deleteWebhook(id);
+        strapi.webhookRunner.remove(webhook);
+      }
     }
 
     ctx.send({ data: ids });

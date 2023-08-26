@@ -6,6 +6,7 @@ class Dialect {
   }
 
   configure() {}
+
   initialize() {}
 
   getSqlType(type) {
@@ -28,8 +29,21 @@ class Dialect {
     return false;
   }
 
-  async startSchemaUpdate() {}
-  async endSchemaUpdate() {}
+  supportsWindowFunctions() {
+    return true;
+  }
+
+  supportsOperator() {
+    return true;
+  }
+
+  async startSchemaUpdate() {
+    // noop
+  }
+
+  async endSchemaUpdate() {
+    // noop
+  }
 
   transformErrors(error) {
     if (error instanceof Error) {
@@ -37,6 +51,10 @@ class Dialect {
     }
 
     throw new Error(error.message);
+  }
+
+  canAddIncrements() {
+    return true;
   }
 }
 

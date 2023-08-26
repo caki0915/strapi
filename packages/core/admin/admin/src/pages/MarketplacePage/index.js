@@ -1,118 +1,263 @@
-import React, { useEffect } from 'react';
-import { useIntl } from 'react-intl';
-import styled from 'styled-components';
+import React, { useEffect, useRef, useState } from 'react';
+
+import {
+  Box,
+  ContentLayout,
+  Flex,
+  Layout,
+  Main,
+  Searchbar,
+  Tab,
+  TabGroup,
+  TabPanel,
+  TabPanels,
+  Tabs,
+} from '@strapi/design-system';
+import {
+  CheckPagePermissions,
+  useAppInfo,
+  useFocusWhenNavigate,
+  useNotification,
+  useQueryParams,
+  useTracking,
+} from '@strapi/helper-plugin';
 import { Helmet } from 'react-helmet';
-import { pxToRem, CheckPagePermissions, useTracking } from '@strapi/helper-plugin';
-import { Layout, HeaderLayout, ContentLayout } from '@strapi/design-system/Layout';
-import { Flex } from '@strapi/design-system/Flex';
-import { Box } from '@strapi/design-system/Box';
-import { Stack } from '@strapi/design-system/Stack';
-import { LinkButton } from '@strapi/design-system/LinkButton';
-import { Main } from '@strapi/design-system/Main';
-import { Typography } from '@strapi/design-system/Typography';
-import adminPermissions from '../../permissions';
-import MarketplacePicture from './assets/marketplace-coming-soon.png';
+import { useIntl } from 'react-intl';
+import { useSelector } from 'react-redux';
 
-const CenterTypography = styled(Typography)`
-  text-align: center;
-`;
+import useDebounce from '../../hooks/useDebounce';
+import useNavigatorOnLine from '../../hooks/useNavigatorOnLine';
+import { selectAdminPermissions } from '../App/selectors';
 
-const Img = styled.img`
-  width: ${190 / 16}rem;
-`;
-
-const StackCentered = styled(Stack)`
-  align-items: center;
-`;
+import MissingPluginBanner from './components/MissingPluginBanner';
+import NpmPackagesFilters from './components/NpmPackagesFilters';
+import NpmPackagesGrid from './components/NpmPackagesGrid';
+import NpmPackagesPagination from './components/NpmPackagesPagination';
+import OfflineLayout from './components/OfflineLayout';
+import PageHeader from './components/PageHeader';
+import SortSelect from './components/SortSelect';
+import useMarketplaceData from './utils/useMarketplaceData';
 
 const MarketPlacePage = () => {
   const { formatMessage } = useIntl();
   const { trackUsage } = useTracking();
+  const trackUsageRef = useRef(trackUsage);
+  const toggleNotification = useNotification();
+  const [{ query }, setQuery] = useQueryParams();
+  const debouncedSearch = useDebounce(query?.search, 500) || '';
+
+  const { autoReload: isInDevelopmentMode, dependencies, useYarn, strapiVersion } = useAppInfo();
+  const isOnline = useNavigatorOnLine();
+
+  const npmPackageType = query?.npmPackageType || 'plugin';
+
+  const [tabQuery, setTabQuery] = useState({
+    plugin: npmPackageType === 'plugin' ? { ...query } : {},
+    provider: npmPackageType === 'provider' ? { ...query } : {},
+  });
+
+  useFocusWhenNavigate();
 
   useEffect(() => {
-    trackUsage('didGoToMarketplace');
-  }, [trackUsage]);
+    trackUsageRef.current('didGoToMarketplace');
+  }, []);
+
+  useEffect(() => {
+    if (!isInDevelopmentMode) {
+      toggleNotification({
+        type: 'info',
+        message: {
+          id: 'admin.pages.MarketPlacePage.production',
+          defaultMessage: 'Manage plugins from the development environment',
+        },
+      });
+    }
+  }, [toggleNotification, isInDevelopmentMode]);
+
+  const {
+    pluginsResponse,
+    providersResponse,
+    pluginsStatus,
+    providersStatus,
+    possibleCollections,
+    possibleCategories,
+    pagination,
+  } = useMarketplaceData({ npmPackageType, debouncedSearch, query, tabQuery });
+
+  if (!isOnline) {
+    return <OfflineLayout />;
+  }
+
+  const handleTabChange = (selected) => {
+    const selectedTab = selected === 0 ? 'plugin' : 'provider';
+    const hasTabQuery = tabQuery[selectedTab] && Object.keys(tabQuery[selectedTab]).length;
+
+    if (hasTabQuery) {
+      setQuery({
+        // Keep filters and search
+        ...tabQuery[selectedTab],
+        search: query?.search || '',
+        // Set tab and reset page
+        npmPackageType: selectedTab,
+        page: 1,
+      });
+    } else {
+      setQuery({
+        // Set tab
+        npmPackageType: selectedTab,
+        // Clear filters
+        collections: [],
+        categories: [],
+        sort: 'name:asc',
+        page: 1,
+        // Keep search
+        search: query?.search || '',
+      });
+    }
+  };
+
+  const handleSelectChange = (update) => {
+    setQuery({ ...update, page: 1 });
+    setTabQuery((prev) => ({
+      ...prev,
+      [npmPackageType]: { ...prev[npmPackageType], ...update },
+    }));
+  };
+
+  const handleSelectClear = (filterType) => {
+    setQuery({ [filterType]: [], page: null }, 'remove');
+    setTabQuery((prev) => ({ ...prev, [npmPackageType]: {} }));
+  };
+
+  // Check if plugins and providers are installed already
+  const installedPackageNames = Object.keys(dependencies);
 
   return (
-    <CheckPagePermissions permissions={adminPermissions.marketplace.main}>
-      <Layout>
-        <Main>
-          <Helmet
-            title={formatMessage({
-              id: 'admin.pages.MarketPlacePage.helmet',
-              defaultMessage: 'Marketplace - Plugins',
+    <Layout>
+      <Main>
+        <Helmet
+          title={formatMessage({
+            id: 'admin.pages.MarketPlacePage.helmet',
+            defaultMessage: 'Marketplace - Plugins',
+          })}
+        />
+        <PageHeader isOnline={isOnline} npmPackageType={npmPackageType} />
+        <ContentLayout>
+          <TabGroup
+            label={formatMessage({
+              id: 'admin.pages.MarketPlacePage.tab-group.label',
+              defaultMessage: 'Plugins and Providers for Strapi',
             })}
-          />
-          <HeaderLayout
-            title={formatMessage({
-              id: 'admin.pages.MarketPlacePage.title',
-              defaultMessage: 'Marketplace',
-            })}
-            subtitle={formatMessage({
-              id: 'admin.pages.MarketPlacePage.subtitle',
-              defaultMessage: 'Get more out of Strapi',
-            })}
-          />
-          <ContentLayout>
-            <StackCentered
-              size={0}
-              hasRadius
-              background="neutral0"
-              shadow="tableShadow"
-              paddingTop={10}
-              paddingBottom={10}
-            >
-              <Box paddingBottom={7}>
-                <Img
-                  alt={formatMessage({
-                    id: 'admin.pages.MarketPlacePage.illustration',
-                    defaultMessage: 'marketplace illustration',
+            id="tabs"
+            variant="simple"
+            initialSelectedTabIndex={['plugin', 'provider'].indexOf(npmPackageType)}
+            onTabChange={handleTabChange}
+          >
+            <Flex justifyContent="space-between" paddingBottom={4}>
+              <Tabs>
+                <Tab>
+                  {formatMessage({
+                    id: 'admin.pages.MarketPlacePage.plugins',
+                    defaultMessage: 'Plugins',
+                  })}{' '}
+                  {pluginsStatus === 'success'
+                    ? `(${pluginsResponse.meta.pagination.total})`
+                    : '...'}
+                </Tab>
+                <Tab>
+                  {formatMessage({
+                    id: 'admin.pages.MarketPlacePage.providers',
+                    defaultMessage: 'Providers',
+                  })}{' '}
+                  {providersStatus === 'success'
+                    ? `(${providersResponse.meta.pagination.total})`
+                    : '...'}
+                </Tab>
+              </Tabs>
+              <Box width="25%">
+                <Searchbar
+                  name="searchbar"
+                  onClear={() => setQuery({ search: '', page: 1 })}
+                  value={query?.search}
+                  onChange={(e) => setQuery({ search: e.target.value, page: 1 })}
+                  clearLabel={formatMessage({
+                    id: 'admin.pages.MarketPlacePage.search.clear',
+                    defaultMessage: 'Clear the search',
                   })}
-                  src={MarketplacePicture}
-                />
+                  placeholder={formatMessage({
+                    id: 'admin.pages.MarketPlacePage.search.placeholder',
+                    defaultMessage: 'Search',
+                  })}
+                >
+                  {formatMessage({
+                    id: 'admin.pages.MarketPlacePage.search.placeholder',
+                    defaultMessage: 'Search',
+                  })}
+                </Searchbar>
               </Box>
-              <Typography variant="alpha">
-                {formatMessage({
-                  id: 'admin.pages.MarketPlacePage.coming-soon.1',
-                  defaultMessage: 'A new way to make Strapi awesome.',
-                })}
-              </Typography>
-              <Typography variant="alpha" textColor="primary700">
-                {formatMessage({
-                  id: 'admin.pages.MarketPlacePage.coming-soon.2',
-                  defaultMessage: 'A new way to make Strapi awesome.',
-                })}
-              </Typography>
-              <Flex maxWidth={pxToRem(580)} paddingTop={3}>
-                <CenterTypography variant="epsilon" textColor="neutral600">
-                  {formatMessage({
-                    id: 'admin.pages.MarketPlacePage.content.subtitle',
-                    defaultMessage:
-                      'The new marketplace will help you get more out of Strapi. We are working hard to offer the best experience to discover and install plugins.',
-                  })}
-                </CenterTypography>
-              </Flex>
-              <Stack paddingTop={6} horizontal size={2}>
-                {/* Temporarily hidden until we have the right URL for the link */}
-                {/* <LinkButton href="https://strapi.io/" size="L" variant="secondary">
-                  {formatMessage({
-                    id: 'admin.pages.MarketPlacePage.submit.plugin.link',
-                    defaultMessage: 'Submit your plugin',
-                  })}
-                </LinkButton> */}
-                <LinkButton href="https://strapi.io/blog/strapi-market-is-coming-soon" size="L">
-                  {formatMessage({
-                    id: 'admin.pages.MarketPlacePage.blog.link',
-                    defaultMessage: 'Read our blog post',
-                  })}
-                </LinkButton>
-              </Stack>
-            </StackCentered>
-          </ContentLayout>
-        </Main>
-      </Layout>
+            </Flex>
+            <Flex paddingBottom={4} gap={2}>
+              <SortSelect
+                sortQuery={query?.sort || 'name:asc'}
+                handleSelectChange={handleSelectChange}
+              />
+              <NpmPackagesFilters
+                npmPackageType={npmPackageType}
+                possibleCollections={possibleCollections}
+                possibleCategories={possibleCategories}
+                query={query || {}}
+                handleSelectChange={handleSelectChange}
+                handleSelectClear={handleSelectClear}
+              />
+            </Flex>
+
+            <TabPanels>
+              {/* Plugins panel */}
+              <TabPanel>
+                <NpmPackagesGrid
+                  npmPackages={pluginsResponse?.data}
+                  status={pluginsStatus}
+                  installedPackageNames={installedPackageNames}
+                  useYarn={useYarn}
+                  isInDevelopmentMode={isInDevelopmentMode}
+                  npmPackageType="plugin"
+                  strapiAppVersion={strapiVersion}
+                  debouncedSearch={debouncedSearch}
+                />
+              </TabPanel>
+              {/* Providers panel */}
+              <TabPanel>
+                <NpmPackagesGrid
+                  npmPackages={providersResponse?.data}
+                  status={providersStatus}
+                  installedPackageNames={installedPackageNames}
+                  useYarn={useYarn}
+                  isInDevelopmentMode={isInDevelopmentMode}
+                  npmPackageType="provider"
+                  debouncedSearch={debouncedSearch}
+                />
+              </TabPanel>
+            </TabPanels>
+          </TabGroup>
+          {pagination && <NpmPackagesPagination pagination={pagination} />}
+          <Box paddingTop={8}>
+            <MissingPluginBanner />
+          </Box>
+        </ContentLayout>
+      </Main>
+    </Layout>
+  );
+};
+
+const ProtectedMarketPlace = () => {
+  const permissions = useSelector(selectAdminPermissions);
+
+  return (
+    <CheckPagePermissions permissions={permissions.marketplace.main}>
+      <MarketPlacePage />
     </CheckPagePermissions>
   );
 };
 
-export default MarketPlacePage;
+export { MarketPlacePage };
+export default ProtectedMarketPlace;

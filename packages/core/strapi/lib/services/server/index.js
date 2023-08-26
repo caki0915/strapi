@@ -9,8 +9,9 @@ const { createContentAPI } = require('./content-api');
 const registerAllRoutes = require('./register-routes');
 const registerApplicationMiddlewares = require('./register-middlewares');
 const createKoaApp = require('./koa');
+const requestCtx = require('../request-context');
 
-const healthCheck = async ctx => {
+const healthCheck = async (ctx) => {
   ctx.set('strapi', 'You are so French!');
   ctx.status = 204;
 };
@@ -27,8 +28,13 @@ const healthCheck = async ctx => {
  * @param {Strapi} strapi
  * @returns {Server}
  */
-const createServer = strapi => {
-  const app = createKoaApp({ proxy: strapi.config.get('server.proxy') });
+const createServer = (strapi) => {
+  const app = createKoaApp({
+    proxy: strapi.config.get('server.proxy'),
+    keys: strapi.config.get('server.app.keys'),
+  });
+
+  app.use((ctx, next) => requestCtx.run(ctx, () => next()));
 
   const router = new Router();
 
@@ -80,14 +86,14 @@ const createServer = strapi => {
     mount() {
       state.mounted = true;
 
-      Object.values(apis).forEach(api => api.mount(router));
+      Object.values(apis).forEach((api) => api.mount(router));
       app.use(router.routes()).use(router.allowedMethods());
 
       return this;
     },
 
-    async initRouting() {
-      await registerAllRoutes(strapi);
+    initRouting() {
+      registerAllRoutes(strapi);
 
       return this;
     },
@@ -100,10 +106,6 @@ const createServer = strapi => {
 
     listRoutes() {
       const allRoutes = [...router.stack];
-
-      Object.values(apis).forEach(api => {
-        allRoutes.push(...api.listRoutes());
-      });
 
       return allRoutes;
     },

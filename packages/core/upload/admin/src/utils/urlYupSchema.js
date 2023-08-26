@@ -1,6 +1,6 @@
-/* eslint-disable no-template-curly-in-string */
-import * as yup from 'yup';
 import { translatedErrors as errorsTrads } from '@strapi/helper-plugin';
+import * as yup from 'yup';
+
 import getTrad from './getTrad';
 
 export const urlSchema = yup.object().shape({
@@ -24,7 +24,7 @@ export const urlSchema = yup.object().shape({
         });
       }
 
-      const filtered = urls.filter(val => {
+      const filtered = urls.filter((val) => {
         try {
           // eslint-disable-next-line no-new
           new URL(val);

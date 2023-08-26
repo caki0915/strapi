@@ -6,6 +6,7 @@ const {
   isSortable,
   isSearchable,
   isVisible,
+  isListable,
   isRelation,
   getDefaultMainField,
 } = require('./attributes');
@@ -19,7 +20,7 @@ function createDefaultMetadatas(schema) {
     id: {
       edit: {},
       list: {
-        label: 'Id',
+        label: 'id',
         searchable: true,
         sortable: true,
       },
@@ -29,15 +30,16 @@ function createDefaultMetadatas(schema) {
 
 function createDefaultMetadata(schema, name) {
   const edit = {
-    label: _.upperFirst(name),
+    label: name,
     description: '',
     placeholder: '',
     visible: isVisible(schema, name),
     editable: true,
   };
 
-  if (isRelation(schema.attributes[name])) {
-    const { targetModel } = schema.attributes[name];
+  const fieldAttributes = schema.attributes[name];
+  if (isRelation(fieldAttributes)) {
+    const { targetModel } = fieldAttributes;
 
     const targetSchema = getTargetSchema(targetModel);
 
@@ -59,7 +61,7 @@ function createDefaultMetadata(schema, name) {
   );
 
   const list = {
-    label: _.upperFirst(name),
+    label: name,
     searchable: isSearchable(schema, name),
     sortable: isSortable(schema, name),
     ..._.pick(_.get(schema, ['config', 'metadatas', name, 'list'], {}), [
@@ -91,7 +93,7 @@ async function syncMetadatas(configuration, schema) {
     const { edit, list } = metasWithDefaults[key];
     const attr = schema.attributes[key];
 
-    let updatedMeta = { edit, list };
+    const updatedMeta = { edit, list };
     // update sortable attr
     if (list.sortable && !isSortable(schema, key)) {
       _.set(updatedMeta, ['list', 'sortable'], false);
@@ -120,7 +122,7 @@ async function syncMetadatas(configuration, schema) {
 
     if (!targetSchema) return acc;
 
-    if (!isSortable(targetSchema, edit.mainField)) {
+    if (!isSortable(targetSchema, edit.mainField) && !isListable(targetSchema, edit.mainField)) {
       _.set(updatedMeta, ['edit', 'mainField'], getDefaultMainField(targetSchema));
       _.set(acc, [key], updatedMeta);
       return acc;
@@ -132,7 +134,7 @@ async function syncMetadatas(configuration, schema) {
   return _.assign(metasWithDefaults, updatedMetas);
 }
 
-const getTargetSchema = targetModel => {
+const getTargetSchema = (targetModel) => {
   return getService('content-types').findContentType(targetModel);
 };
 

@@ -5,13 +5,10 @@
  */
 
 import React, { useState } from 'react';
-import { useIntl } from 'react-intl';
+
+import { Box, Checkbox, Flex, NumberInput, TextInput } from '@strapi/design-system';
 import PropTypes from 'prop-types';
-import { Box } from '@strapi/design-system/Box';
-import { Checkbox } from '@strapi/design-system/Checkbox';
-import { Stack } from '@strapi/design-system/Stack';
-import { NumberInput } from '@strapi/design-system/NumberInput';
-import { TextInput } from '@strapi/design-system/TextInput';
+import { useIntl } from 'react-intl';
 
 const CheckboxWithNumberField = ({ error, intlLabel, modifiedData, name, onChange, value }) => {
   const { formatMessage } = useIntl();
@@ -29,16 +26,16 @@ const CheckboxWithNumberField = ({ error, intlLabel, modifiedData, name, onChang
   const errorMessage = error ? formatMessage({ id: error, defaultMessage: error }) : '';
 
   return (
-    <Stack size={2}>
+    <Flex direction="column" alignItems="stretch" gap={2}>
       <Checkbox
         id={name}
         name={name}
-        onValueChange={value => {
+        onValueChange={(value) => {
           const initValue = type === 'text' ? '0' : 0;
           const nextValue = value ? initValue : null;
 
           onChange({ target: { name, value: nextValue } });
-          setShowInput(prev => !prev);
+          setShowInput((prev) => !prev);
         }}
         value={showInput}
       >
@@ -63,7 +60,7 @@ const CheckboxWithNumberField = ({ error, intlLabel, modifiedData, name, onChang
               error={errorMessage}
               id={name}
               name={name}
-              onValueChange={value => {
+              onValueChange={(value) => {
                 onChange({ target: { name, value, type } });
               }}
               value={value || 0}
@@ -71,7 +68,7 @@ const CheckboxWithNumberField = ({ error, intlLabel, modifiedData, name, onChang
           )}
         </Box>
       )}
-    </Stack>
+    </Flex>
   );
 };
 

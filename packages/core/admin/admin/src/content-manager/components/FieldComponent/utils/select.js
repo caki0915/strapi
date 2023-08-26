@@ -1,9 +1,11 @@
 import { useMemo } from 'react';
-import { get, take } from 'lodash';
-import { useCMEditViewDataManager } from '@strapi/helper-plugin';
 
-import { getFieldName } from '../../../utils';
+import { useCMEditViewDataManager } from '@strapi/helper-plugin';
+import get from 'lodash/get';
+import take from 'lodash/take';
+
 import { useContentTypeLayout } from '../../../hooks';
+import { getFieldName } from '../../../utils';
 
 function useSelect({ isFromDynamicZone, name }) {
   const {
@@ -22,7 +24,7 @@ function useSelect({ isFromDynamicZone, name }) {
   const allDynamicZoneFields = useMemo(() => {
     const attributes = get(contentType, ['attributes'], {});
 
-    const dynamicZoneFields = Object.keys(attributes).filter(attrName => {
+    const dynamicZoneFields = Object.keys(attributes).filter((attrName) => {
       return get(attributes, [attrName, 'type'], '') === 'dynamiczone';
     });
 
@@ -43,17 +45,17 @@ function useSelect({ isFromDynamicZone, name }) {
       return true;
     }
 
-    const includedDynamicZoneFields = allowedFields.filter(name => name === compoName[0]);
+    const includedDynamicZoneFields = allowedFields.filter((name) => name === compoName[0]);
 
     if (includedDynamicZoneFields.length > 0) {
       return true;
     }
 
     const relatedChildrenAllowedFields = allowedFields
-      .map(fieldName => {
+      .map((fieldName) => {
         return fieldName.split('.');
       })
-      .filter(fieldName => {
+      .filter((fieldName) => {
         if (fieldName.length < compoName.length) {
           return false;
         }
@@ -78,10 +80,10 @@ function useSelect({ isFromDynamicZone, name }) {
     const allowedFields = isCreatingEntry ? [] : readActionAllowedFields;
 
     const relatedChildrenAllowedFields = allowedFields
-      .map(fieldName => {
+      .map((fieldName) => {
         return fieldName.split('.');
       })
-      .filter(fieldName => {
+      .filter((fieldName) => {
         if (fieldName.length < compoName.length) {
           return false;
         }

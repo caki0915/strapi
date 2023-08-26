@@ -77,10 +77,11 @@ module.exports = (config, { strapi }) => {
         }),
         config: { auth: false },
       },
+      // All other public GET-routes except /uploads/(.*) which is handled in upload middleware
       {
         method: 'GET',
-        path: '/(.*)',
-        handler: koaStatic(strapi.dirs.public, {
+        path: '/((?!uploads/).+)',
+        handler: koaStatic(strapi.dirs.static.public, {
           maxage: maxAge,
           defer: true,
         }),
@@ -88,36 +89,6 @@ module.exports = (config, { strapi }) => {
       },
     ]);
   }
-
-  if (!strapi.config.serveAdminPanel) return async (ctx, next) => next();
-
-  const buildDir = path.resolve(strapi.dirs.root, 'build');
-  const serveAdmin = async (ctx, next) => {
-    await next();
-
-    if (ctx.method !== 'HEAD' && ctx.method !== 'GET') {
-      return;
-    }
-
-    if (ctx.body != null || ctx.status !== 404) {
-      return;
-    }
-
-    ctx.type = 'html';
-    ctx.body = fs.createReadStream(path.join(buildDir + '/index.html'));
-  };
-
-  strapi.server.routes([
-    {
-      method: 'GET',
-      path: `${strapi.config.admin.path}/:path*`,
-      handler: [
-        serveAdmin,
-        serveStatic(buildDir, { maxage: maxAge, defer: false, index: 'index.html' }),
-      ],
-      config: { auth: false },
-    },
-  ]);
 
   return null;
 };

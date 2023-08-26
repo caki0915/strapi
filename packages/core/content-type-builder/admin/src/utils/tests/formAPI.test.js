@@ -1,4 +1,5 @@
 import * as yup from 'yup';
+
 import formsAPI from '../formAPI';
 
 describe('formsAPI', () => {
@@ -50,7 +51,7 @@ describe('formsAPI', () => {
 
   describe('mutateContentTypeSchema', () => {
     it('should call the mutation with the correct arguments', () => {
-      const mutation = jest.fn(data => data);
+      const mutation = jest.fn((data) => data);
       formsAPI.addContentTypeSchemaMutation(mutation);
 
       expect(formsAPI.contentTypeSchemaMutations).toHaveLength(1);

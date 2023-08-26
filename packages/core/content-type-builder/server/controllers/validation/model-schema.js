@@ -13,26 +13,22 @@ const createSchema = (types, relations, { modelType } = {}) => {
   const shape = {
     description: yup.string(),
     draftAndPublish: yup.boolean(),
+    options: yup.object(),
     pluginOptions: yup.object(),
-    collectionName: yup
-      .string()
-      .nullable()
-      .test(isValidCollectionName),
+    collectionName: yup.string().nullable().test(isValidCollectionName),
     attributes: createAttributesValidator({ types, relations, modelType }),
+    reviewWorkflows: yup.boolean(),
   };
 
   if (modelType === modelTypes.CONTENT_TYPE) {
-    shape.kind = yup
-      .string()
-      .oneOf([typeKinds.SINGLE_TYPE, typeKinds.COLLECTION_TYPE])
-      .nullable();
+    shape.kind = yup.string().oneOf([typeKinds.SINGLE_TYPE, typeKinds.COLLECTION_TYPE]).nullable();
   }
 
   return yup.object(shape).noUnknown();
 };
 
 const createAttributesValidator = ({ types, modelType, relations }) => {
-  return yup.lazy(attributes => {
+  return yup.lazy((attributes) => {
     return yup
       .object()
       .shape(
@@ -58,7 +54,7 @@ const createAttributesValidator = ({ types, modelType, relations }) => {
   });
 };
 
-const isForbiddenKey = key => {
+const isForbiddenKey = (key) => {
   return [
     ...FORBIDDEN_ATTRIBUTE_NAMES,
     ...getService('builder').getReservedNames().attributes,

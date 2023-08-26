@@ -4,36 +4,51 @@
  *
  */
 
-import PropTypes from 'prop-types';
 import React, { useRef, useState } from 'react';
-import { useIntl } from 'react-intl';
+
 import {
-  ModalLayout,
-  ModalHeader,
+  Button,
+  FieldLabel,
+  Flex,
+  Grid,
+  GridItem,
+  Loader,
   ModalBody,
   ModalFooter,
-} from '@strapi/design-system/ModalLayout';
-import { Typography } from '@strapi/design-system/Typography';
-import { Stack } from '@strapi/design-system/Stack';
-import { Grid, GridItem } from '@strapi/design-system/Grid';
-import { Button } from '@strapi/design-system/Button';
-import { TextInput } from '@strapi/design-system/TextInput';
-import { getFileExtension, Form } from '@strapi/helper-plugin';
-import { VisuallyHidden } from '@strapi/design-system/VisuallyHidden';
+  ModalLayout,
+  TextInput,
+  VisuallyHidden,
+} from '@strapi/design-system';
+import { Form, getFileExtension, pxToRem, useTracking } from '@strapi/helper-plugin';
 import { Formik } from 'formik';
+import isEqual from 'lodash/isEqual';
+import PropTypes from 'prop-types';
+import { useIntl } from 'react-intl';
+import styled from 'styled-components';
 import * as yup from 'yup';
-import { PreviewBox } from './PreviewBox';
-import { AssetMeta } from './AssetMeta';
-import { getTrad } from '../../utils';
-import formatBytes from '../../utils/formatBytes';
-import { useEditAsset } from '../../hooks/useEditAsset';
-import { ReplaceMediaButton } from './ReplaceMediaButton';
+
 import { AssetDefinition } from '../../constants';
+import { useEditAsset } from '../../hooks/useEditAsset';
+import { useFolderStructure } from '../../hooks/useFolderStructure';
+import { findRecursiveFolderByValue, getTrad } from '../../utils';
+import formatBytes from '../../utils/formatBytes';
+import { ContextInfo } from '../ContextInfo';
+import SelectTree from '../SelectTree';
+
+import { DialogHeader } from './DialogHeader';
+import { PreviewBox } from './PreviewBox';
+import { ReplaceMediaButton } from './ReplaceMediaButton';
+
+const LoadingBody = styled(Flex)`
+  /* 80px are coming from the Tabs component that is not included in the ModalBody */
+  min-height: ${() => `calc(60vh + ${pxToRem(80)})`};
+`;
 
 const fileInfoSchema = yup.object({
   name: yup.string().required(),
   alternativeText: yup.string(),
   caption: yup.string(),
+  folder: yup.number(),
 });
 
 export const EditAssetDialog = ({
@@ -45,18 +60,37 @@ export const EditAssetDialog = ({
   trackedLocation,
 }) => {
   const { formatMessage, formatDate } = useIntl();
+  const { trackUsage } = useTracking();
   const submitButtonRef = useRef(null);
   const [isCropping, setIsCropping] = useState(false);
   const [replacementFile, setReplacementFile] = useState();
   const { editAsset, isLoading } = useEditAsset();
 
-  const handleSubmit = async values => {
-    if (asset.isLocal) {
-      const nextAsset = { ...asset, ...values };
+  const { data: folderStructure, isLoading: folderStructureIsLoading } = useFolderStructure({
+    enabled: true,
+  });
 
+  const handleSubmit = async (values) => {
+    const nextAsset = { ...asset, ...values, folder: values.parent.value };
+
+    if (asset.isLocal) {
       onClose(nextAsset);
     } else {
-      const editedAsset = await editAsset({ ...asset, ...values }, replacementFile);
+      const editedAsset = await editAsset(nextAsset, replacementFile);
+
+      const assetType = asset?.mime.split('/')[0];
+      // if the folder parent was the root of Media Library, its id is null
+      // we know it changed location if the new parent value exists
+      const didChangeLocation = asset?.folder?.id
+        ? asset.folder.id !== values.parent.value
+        : asset.folder === null && !!values.parent.value;
+
+      trackUsage('didEditMediaLibraryElements', {
+        location: trackedLocation,
+        type: assetType,
+        changeLocation: didChangeLocation,
+      });
+
       onClose(editedAsset);
     }
   };
@@ -76,141 +110,244 @@ export const EditAssetDialog = ({
 
   const formDisabled = !canUpdate || isCropping;
 
-  return (
-    <>
-      <ModalLayout onClose={() => onClose()} labelledBy="title">
-        <ModalHeader>
-          <Typography fontWeight="bold" textColor="neutral800" as="h2" id="title">
-            {formatMessage({ id: getTrad('modal.edit.title'), defaultMessage: 'Details' })}
-          </Typography>
-        </ModalHeader>
-        <ModalBody>
-          <Grid gap={4}>
-            <GridItem xs={12} col={6}>
-              <PreviewBox
-                asset={asset}
-                canUpdate={canUpdate}
-                canCopyLink={canCopyLink}
-                canDownload={canDownload}
-                onDelete={onClose}
-                onCropFinish={handleFinishCropping}
-                onCropStart={handleStartCropping}
-                onCropCancel={handleCancelCropping}
-                replacementFile={replacementFile}
-                trackedLocation={trackedLocation}
-              />
-            </GridItem>
-            <GridItem xs={12} col={6}>
-              <Formik
-                validationSchema={fileInfoSchema}
-                validateOnChange={false}
-                onSubmit={handleSubmit}
-                initialValues={{
-                  name: asset.name,
-                  alternativeText: asset.alternativeText || '',
-                  caption: asset.caption || '',
-                }}
-              >
-                {({ values, errors, handleChange }) => (
-                  <Form noValidate>
-                    <Stack size={3}>
-                      <AssetMeta
-                        size={formatBytes(asset.size)}
-                        dimension={
-                          asset.height && asset.width ? `${asset.height}✕${asset.width}` : ''
-                        }
-                        date={formatDate(new Date(asset.createdAt))}
-                        extension={getFileExtension(asset.ext)}
-                      />
+  const handleConfirmClose = () => {
+    // eslint-disable-next-line no-alert
+    const confirm = window.confirm(
+      formatMessage({
+        id: 'window.confirm.close-modal.file',
+        defaultMessage: 'Are you sure? Your changes will be lost.',
+      })
+    );
 
-                      <TextInput
-                        size="S"
-                        label={formatMessage({
-                          id: getTrad('form.input.label.file-name'),
-                          defaultMessage: 'File name',
-                        })}
-                        name="name"
-                        value={values.name}
-                        error={errors.name}
-                        onChange={handleChange}
-                        disabled={formDisabled}
-                      />
+    if (confirm) {
+      onClose();
+    }
+  };
 
-                      <TextInput
-                        size="S"
-                        label={formatMessage({
-                          id: getTrad('form.input.label.file-alt'),
-                          defaultMessage: 'Alternative text',
-                        })}
-                        name="alternativeText"
-                        hint={formatMessage({
-                          id: getTrad({ id: getTrad('form.input.decription.file-alt') }),
-                          defaultMessage:
-                            'This text will be displayed if the asset can’t be shown.',
-                        })}
-                        value={values.alternativeText}
-                        error={errors.alternativeText}
-                        onChange={handleChange}
-                        disabled={formDisabled}
-                      />
+  const activeFolderId = asset?.folder?.id;
+  const initialFormData = !folderStructureIsLoading && {
+    name: asset.name,
+    alternativeText: asset.alternativeText ?? undefined,
+    caption: asset.caption ?? undefined,
+    parent: {
+      value: activeFolderId ?? undefined,
+      label:
+        findRecursiveFolderByValue(folderStructure, activeFolderId)?.label ??
+        folderStructure[0].label,
+    },
+  };
 
-                      <TextInput
-                        size="S"
-                        label={formatMessage({
-                          id: getTrad('form.input.label.file-caption'),
-                          defaultMessage: 'Caption',
-                        })}
-                        name="caption"
-                        value={values.caption}
-                        error={errors.caption}
-                        onChange={handleChange}
-                        disabled={formDisabled}
-                      />
-                    </Stack>
+  const handleClose = (values) => {
+    if (!isEqual(initialFormData, values)) {
+      handleConfirmClose();
+    } else {
+      onClose();
+    }
+  };
 
-                    <VisuallyHidden>
-                      <button
-                        type="submit"
-                        tabIndex={-1}
-                        ref={submitButtonRef}
-                        disabled={formDisabled}
-                      >
-                        {formatMessage({ id: 'submit', defaultMessage: 'Submit' })}
-                      </button>
-                    </VisuallyHidden>
-                  </Form>
-                )}
-              </Formik>
-            </GridItem>
-          </Grid>
-        </ModalBody>
+  if (folderStructureIsLoading) {
+    return (
+      <ModalLayout onClose={() => handleClose()} labelledBy="title">
+        <DialogHeader />
+        <LoadingBody minHeight="60vh" justifyContent="center" paddingTop={4} paddingBottom={4}>
+          <Loader>
+            {formatMessage({
+              id: getTrad('content.isLoading'),
+              defaultMessage: 'Content is loading.',
+            })}
+          </Loader>
+        </LoadingBody>
         <ModalFooter
           startActions={
-            <Button onClick={() => onClose()} variant="tertiary">
+            <Button onClick={() => handleClose()} variant="tertiary">
               {formatMessage({ id: 'cancel', defaultMessage: 'Cancel' })}
             </Button>
           }
-          endActions={
-            <>
-              <ReplaceMediaButton
-                onSelectMedia={setReplacementFile}
-                acceptedMime={asset.mime}
-                disabled={formDisabled}
-                trackedLocation={trackedLocation}
-              />
-
-              <Button
-                onClick={() => submitButtonRef.current.click()}
-                loading={isLoading}
-                disabled={formDisabled}
-              >
-                {formatMessage({ id: 'form.button.finish', defaultMessage: 'Finish' })}
-              </Button>
-            </>
-          }
         />
       </ModalLayout>
-    </>
+    );
+  }
+
+  return (
+    <Formik
+      validationSchema={fileInfoSchema}
+      validateOnChange={false}
+      onSubmit={handleSubmit}
+      initialValues={initialFormData}
+    >
+      {({ values, errors, handleChange, setFieldValue }) => (
+        <ModalLayout onClose={() => handleClose(values)} labelledBy="title">
+          <DialogHeader />
+          <ModalBody>
+            <Grid gap={4}>
+              <GridItem xs={12} col={6}>
+                <PreviewBox
+                  asset={asset}
+                  canUpdate={canUpdate}
+                  canCopyLink={canCopyLink}
+                  canDownload={canDownload}
+                  onDelete={onClose}
+                  onCropFinish={handleFinishCropping}
+                  onCropStart={handleStartCropping}
+                  onCropCancel={handleCancelCropping}
+                  replacementFile={replacementFile}
+                  trackedLocation={trackedLocation}
+                />
+              </GridItem>
+              <GridItem xs={12} col={6}>
+                <Form noValidate>
+                  <Flex direction="column" alignItems="stretch" gap={3}>
+                    <ContextInfo
+                      blocks={[
+                        {
+                          label: formatMessage({
+                            id: getTrad('modal.file-details.size'),
+                            defaultMessage: 'Size',
+                          }),
+                          value: formatBytes(asset.size),
+                        },
+
+                        {
+                          label: formatMessage({
+                            id: getTrad('modal.file-details.dimensions'),
+                            defaultMessage: 'Dimensions',
+                          }),
+                          value:
+                            asset.height && asset.width ? `${asset.width}✕${asset.height}` : null,
+                        },
+
+                        {
+                          label: formatMessage({
+                            id: getTrad('modal.file-details.date'),
+                            defaultMessage: 'Date',
+                          }),
+                          value: formatDate(new Date(asset.createdAt)),
+                        },
+
+                        {
+                          label: formatMessage({
+                            id: getTrad('modal.file-details.extension'),
+                            defaultMessage: 'Extension',
+                          }),
+                          value: getFileExtension(asset.ext),
+                        },
+
+                        {
+                          label: formatMessage({
+                            id: getTrad('modal.file-details.id'),
+                            defaultMessage: 'Asset ID',
+                          }),
+                          value: asset.id,
+                        },
+                      ]}
+                    />
+
+                    <TextInput
+                      label={formatMessage({
+                        id: getTrad('form.input.label.file-name'),
+                        defaultMessage: 'File name',
+                      })}
+                      name="name"
+                      value={values.name}
+                      error={errors.name}
+                      onChange={handleChange}
+                      disabled={formDisabled}
+                    />
+
+                    <TextInput
+                      label={formatMessage({
+                        id: getTrad('form.input.label.file-alt'),
+                        defaultMessage: 'Alternative text',
+                      })}
+                      name="alternativeText"
+                      hint={formatMessage({
+                        id: getTrad('form.input.decription.file-alt'),
+                        defaultMessage: 'This text will be displayed if the asset can’t be shown.',
+                      })}
+                      value={values.alternativeText}
+                      error={errors.alternativeText}
+                      onChange={handleChange}
+                      disabled={formDisabled}
+                    />
+
+                    <TextInput
+                      label={formatMessage({
+                        id: getTrad('form.input.label.file-caption'),
+                        defaultMessage: 'Caption',
+                      })}
+                      name="caption"
+                      value={values.caption}
+                      error={errors.caption}
+                      onChange={handleChange}
+                      disabled={formDisabled}
+                    />
+
+                    <Flex direction="column" alignItems="stretch" gap={1}>
+                      <FieldLabel htmlFor="asset-folder">
+                        {formatMessage({
+                          id: getTrad('form.input.label.file-location'),
+                          defaultMessage: 'Location',
+                        })}
+                      </FieldLabel>
+
+                      <SelectTree
+                        name="parent"
+                        defaultValue={values.parent}
+                        options={folderStructure}
+                        onChange={(value) => {
+                          setFieldValue('parent', value);
+                        }}
+                        menuPortalTarget={document.querySelector('body')}
+                        inputId="asset-folder"
+                        isDisabled={formDisabled}
+                        error={errors?.parent}
+                        ariaErrorMessage="folder-parent-error"
+                      />
+                    </Flex>
+                  </Flex>
+
+                  <VisuallyHidden>
+                    <button
+                      type="submit"
+                      tabIndex={-1}
+                      ref={submitButtonRef}
+                      disabled={formDisabled}
+                    >
+                      {formatMessage({ id: 'submit', defaultMessage: 'Submit' })}
+                    </button>
+                  </VisuallyHidden>
+                </Form>
+              </GridItem>
+            </Grid>
+          </ModalBody>
+          <ModalFooter
+            startActions={
+              <Button onClick={() => handleClose(values)} variant="tertiary">
+                {formatMessage({ id: 'global.cancel', defaultMessage: 'Cancel' })}
+              </Button>
+            }
+            endActions={
+              <>
+                <ReplaceMediaButton
+                  onSelectMedia={setReplacementFile}
+                  acceptedMime={asset.mime}
+                  disabled={formDisabled}
+                  trackedLocation={trackedLocation}
+                />
+
+                <Button
+                  onClick={() => submitButtonRef.current.click()}
+                  loading={isLoading}
+                  disabled={formDisabled}
+                >
+                  {formatMessage({ id: 'global.finish', defaultMessage: 'Finish' })}
+                </Button>
+              </>
+            }
+          />
+        </ModalLayout>
+      )}
+    </Formik>
   );
 };
 

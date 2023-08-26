@@ -1,5 +1,5 @@
-import * as yup from 'yup';
 import { translatedErrors } from '@strapi/helper-plugin';
+import * as yup from 'yup';
 
 import { getTrad } from '../../../utils';
 
@@ -23,9 +23,6 @@ const keyLabel = { id: getTrad('PopUpForm.Providers.key.label'), defaultMessage:
 const hintLabel = {
   id: getTrad('PopUpForm.Providers.redirectURL.label'),
   defaultMessage: 'The redirect URL to add in your {provider} application configurations',
-  values: {
-    provider: 'VK',
-  },
 };
 const textPlaceholder = {
   id: getTrad('PopUpForm.Providers.key.placeholder'),
@@ -173,6 +170,21 @@ const forms = {
           size: 12,
           validations: {
             required: true,
+          },
+        },
+      ],
+      [
+        {
+          intlLabel: {
+            id: getTrad({ id: 'PopUpForm.Providers.jwksurl.label' }),
+            defaultMessage: 'JWKS URL',
+          },
+          name: 'jwksurl',
+          type: 'text',
+          placeholder: textPlaceholder,
+          size: 12,
+          validations: {
+            required: false,
           },
         },
       ],

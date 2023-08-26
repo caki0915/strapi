@@ -1,8 +1,10 @@
 import React from 'react';
-import { render } from '@testing-library/react';
-import { ThemeProvider, lightTheme } from '@strapi/design-system';
-import { QueryClient, QueryClientProvider } from 'react-query';
+
+import { lightTheme, ThemeProvider } from '@strapi/design-system';
 import { NotificationsProvider } from '@strapi/helper-plugin';
+import { render } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from 'react-query';
+
 import { MediaLibraryInput } from '..';
 import en from '../../../translations/en.json';
 
@@ -10,7 +12,7 @@ jest.mock('../../../utils/downloadFile');
 
 jest.mock('../../../utils', () => ({
   ...jest.requireActual('../../../utils'),
-  getTrad: x => x,
+  getTrad: (x) => x,
 }));
 
 jest.mock('react-intl', () => ({
@@ -25,7 +27,16 @@ const queryClient = new QueryClient({
   },
 });
 
-const renderCompo = (props = { intlLabel: { id: 'default', defaultMessage: 'default message' } }) =>
+const renderCompo = (
+  props = {
+    onChange: jest.fn(),
+    name: 'test',
+    intlLabel: {
+      id: 'default',
+      defaultMessage: 'default message',
+    },
+  }
+) =>
   render(
     <QueryClientProvider client={queryClient}>
       <ThemeProvider theme={lightTheme}>
@@ -34,13 +45,13 @@ const renderCompo = (props = { intlLabel: { id: 'default', defaultMessage: 'defa
         </NotificationsProvider>
       </ThemeProvider>
     </QueryClientProvider>,
-    { container: document.body }
+    { container: document.getElementById('app') }
   );
 
 describe('<MediaLibraryInput />', () => {
   it('renders and matches the snapshot', () => {
-    const { container } = renderCompo();
+    renderCompo();
 
-    expect(container).toMatchSnapshot();
+    expect(document.body).toMatchSnapshot();
   });
 });

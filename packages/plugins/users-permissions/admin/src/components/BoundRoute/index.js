@@ -1,12 +1,12 @@
 import React from 'react';
-import styled from 'styled-components';
-import { Stack } from '@strapi/design-system/Stack';
-import { Box } from '@strapi/design-system/Box';
-import { Typography } from '@strapi/design-system/Typography';
+
+import { Box, Flex, Typography } from '@strapi/design-system';
 import map from 'lodash/map';
 import tail from 'lodash/tail';
-import { useIntl } from 'react-intl';
 import PropTypes from 'prop-types';
+import { useIntl } from 'react-intl';
+import styled from 'styled-components';
+
 import getMethodColor from './getMethodColor';
 
 const MethodBox = styled(Box)`
@@ -23,7 +23,7 @@ function BoundRoute({ route }) {
   const colors = getMethodColor(route.method);
 
   return (
-    <Stack size={2}>
+    <Flex direction="column" alignItems="stretch" gap={2}>
       <Typography variant="delta" as="h3">
         {formatMessage({
           id: 'users-permissions.BoundRoute.title',
@@ -35,21 +35,21 @@ function BoundRoute({ route }) {
           .{action}
         </Typography>
       </Typography>
-      <Stack horizontal hasRadius background="neutral0" borderColor="neutral200" size={0}>
+      <Flex hasRadius background="neutral0" borderColor="neutral200" gap={0}>
         <MethodBox background={colors.background} borderColor={colors.border} padding={2}>
           <Typography fontWeight="bold" textColor={colors.text}>
             {method}
           </Typography>
         </MethodBox>
         <Box paddingLeft={2} paddingRight={2}>
-          {map(formattedRoute, value => (
+          {map(formattedRoute, (value) => (
             <Typography key={value} textColor={value.includes(':') ? 'neutral600' : 'neutral900'}>
               /{value}
             </Typography>
           ))}
         </Box>
-      </Stack>
-    </Stack>
+      </Flex>
+    </Flex>
   );
 }
 

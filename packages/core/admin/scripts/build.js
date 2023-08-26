@@ -2,38 +2,67 @@
 
 const path = require('path');
 const webpack = require('webpack');
-const webpackConfig = require('../webpack.config');
-const {
-  getCorePluginsPath,
-  getPluginToInstallPath,
-  createPluginsFile,
-} = require('./create-plugins-file');
+const { isObject } = require('lodash');
+// eslint-disable-next-line import/no-extraneous-dependencies
+const SpeedMeasurePlugin = require('speed-measure-webpack-plugin');
 
-const PLUGINS_TO_INSTALL = ['i18n', 'users-permissions'];
+const webpackConfig = require('../webpack.config');
+const { getPlugins } = require('../utils/get-plugins');
+const { createPluginsJs } = require('../utils/create-cache-dir');
+
+// Wrapper that outputs the webpack speed
+const smp = new SpeedMeasurePlugin();
 
 const buildAdmin = async () => {
   const entry = path.join(__dirname, '..', 'admin', 'src');
   const dest = path.join(__dirname, '..', 'build');
-  const corePlugins = getCorePluginsPath();
-  const plugins = getPluginToInstallPath(PLUGINS_TO_INSTALL);
-  const allPlugins = { ...corePlugins, ...plugins };
+  const tsConfigFilePath = path.join(__dirname, '..', 'admin', 'src', 'tsconfig.json');
 
-  await createPluginsFile(allPlugins);
+  /**
+   * We _always_ install these FE plugins, they're considered "core"
+   * and are typically marked as `required` in their package.json
+   */
+  const plugins = getPlugins([
+    '@strapi/plugin-content-type-builder',
+    '@strapi/plugin-email',
+    '@strapi/plugin-upload',
+    '@strapi/plugin-i18n',
+    '@strapi/plugin-users-permissions',
+  ]);
+
+  await createPluginsJs(plugins, path.join(__dirname, '..'));
 
   const args = {
     entry,
     dest,
-    cacheDir: __dirname,
-    pluginsPath: [path.resolve(__dirname, '../../../../packages')],
+    plugins,
     env: 'production',
     optimize: true,
     options: {
       backend: 'http://localhost:1337',
       adminPath: '/admin/',
+
+      /**
+       * Ideally this would take more scenarios into account, such
+       * as the `telemetryDisabled` property in the package.json
+       * of the users project. For builds based on an app we are
+       * passing this information throgh, but here we do not have access
+       * to the app's package.json. By using at least an environment variable
+       * we can make sure developers can actually test this functionality.
+       */
+
+      telemetryDisabled: process.env.STRAPI_TELEMETRY_DISABLED === 'true' ?? false,
     },
+    tsConfigFilePath,
+    enforceSourceMaps: process.env.STRAPI_ENFORCE_SOURCEMAPS === 'true' ?? false,
   };
 
-  const compiler = webpack(webpackConfig(args));
+  const config =
+    process.env.MEASURE_BUILD_SPEED === 'true'
+      ? smp.wrap(webpackConfig(args))
+      : webpackConfig(args);
+
+  const compiler = webpack(config);
 
   console.log('Building the admin panel');
 
@@ -58,7 +87,18 @@ const buildAdmin = async () => {
         if (messages.errors.length > 1) {
           messages.errors.length = 1;
         }
-        return reject(new Error(messages.errors.join('\n\n')));
+
+        return reject(
+          new Error(
+            messages.errors.reduce((acc, error) => {
+              if (isObject(error)) {
+                return acc + error.message;
+              }
+
+              return acc + error.join('\n\n');
+            }, '')
+          )
+        );
       }
 
       return resolve({
@@ -73,7 +113,7 @@ buildAdmin()
   .then(() => {
     process.exit();
   })
-  .catch(err => {
+  .catch((err) => {
     console.error(err);
     process.exit(1);
   });

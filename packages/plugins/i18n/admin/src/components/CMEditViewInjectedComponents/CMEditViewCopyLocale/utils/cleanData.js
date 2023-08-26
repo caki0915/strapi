@@ -1,7 +1,8 @@
 import {
   contentManagementUtilRemoveFieldsFromData,
-  formatComponentData,
+  formatContentTypeData,
 } from '@strapi/helper-plugin';
+
 import removePasswordAndRelationsFieldFromData from './removePasswordAndRelationsFieldFromData';
 
 const cleanData = (data, { contentType, components }, initialLocalizations) => {
@@ -13,15 +14,7 @@ const cleanData = (data, { contentType, components }, initialLocalizations) => {
 
   dataWithoutPasswordsAndRelations.localizations = initialLocalizations;
 
-  const fieldsToRemove = [
-    'createdBy',
-    'updatedBy',
-    'publishedAt',
-    'id',
-    '_id',
-    'updatedAt',
-    'createdAt',
-  ];
+  const fieldsToRemove = ['createdBy', 'updatedBy', 'publishedAt', 'id', 'updatedAt', 'createdAt'];
 
   const cleanedClonedData = contentManagementUtilRemoveFieldsFromData(
     dataWithoutPasswordsAndRelations,
@@ -30,7 +23,7 @@ const cleanData = (data, { contentType, components }, initialLocalizations) => {
     fieldsToRemove
   );
 
-  return formatComponentData(cleanedClonedData, contentType, components);
+  return formatContentTypeData(cleanedClonedData, contentType, components);
 };
 
 export default cleanData;

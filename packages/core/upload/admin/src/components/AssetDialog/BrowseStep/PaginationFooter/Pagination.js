@@ -1,22 +1,20 @@
-import React from 'react';
-import styled from 'styled-components';
+import React, { useMemo } from 'react';
+
+import { Box, Flex } from '@strapi/design-system';
 import PropTypes from 'prop-types';
-import { Flex } from '@strapi/design-system/Flex';
+
 import { PaginationContext } from './PaginationContext';
 
-const PaginationWrapper = styled.nav``;
-const PaginationList = styled(Flex)`
-  & > * + * {
-    margin-left: ${({ theme }) => theme.spaces[1]};
-  }
-`;
-
 export const Pagination = ({ children, label, activePage, pageCount }) => {
+  const paginationValue = useMemo(() => ({ activePage, pageCount }), [activePage, pageCount]);
+
   return (
-    <PaginationContext.Provider value={{ activePage, pageCount }}>
-      <PaginationWrapper aria-label={label}>
-        <PaginationList as="ul">{children}</PaginationList>
-      </PaginationWrapper>
+    <PaginationContext.Provider value={paginationValue}>
+      <Box as="nav" aria-label={label}>
+        <Flex as="ul" gap={1}>
+          {children}
+        </Flex>
+      </Box>
     </PaginationContext.Provider>
   );
 };

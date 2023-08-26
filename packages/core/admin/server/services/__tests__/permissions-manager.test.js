@@ -3,7 +3,7 @@
 const { AbilityBuilder, Ability } = require('@casl/ability');
 const { pick } = require('lodash/fp');
 const sift = require('sift');
-const { buildStrapiQuery } = require('../permission/permissions-manager/query-builers');
+const { buildStrapiQuery } = require('../permission/permissions-manager/query-builders');
 const createPermissionsManager = require('../permission/permissions-manager');
 
 const allowedOperations = [
@@ -23,11 +23,11 @@ const allowedOperations = [
 
 const operations = pick(allowedOperations, sift);
 
-const conditionsMatcher = conditions => {
+const conditionsMatcher = (conditions) => {
   return sift.createQueryTester(conditions, { operations });
 };
 
-const defineAbility = register => {
+const defineAbility = (register) => {
   const { can, build } = new AbilityBuilder(Ability);
 
   register(can);
@@ -46,7 +46,7 @@ describe('Permissions Manager', () => {
 
   describe('get Query', () => {
     test('It should returns an empty query when no conditions are defined', async () => {
-      const ability = defineAbility(can => can('read', 'foo'));
+      const ability = defineAbility((can) => can('read', 'foo'));
       const pm = createPermissionsManager({
         ability,
         action: 'read',
@@ -57,7 +57,7 @@ describe('Permissions Manager', () => {
     });
 
     test('It should returns a valid query from the ability', () => {
-      const ability = defineAbility(can => can('read', 'foo', ['bar'], { kai: 'doe' }));
+      const ability = defineAbility((can) => can('read', 'foo', ['bar'], { kai: 'doe' }));
       const pm = createPermissionsManager({
         ability,
         action: 'read',
@@ -70,7 +70,7 @@ describe('Permissions Manager', () => {
     });
 
     test('It should throw if no action is defined', () => {
-      const ability = defineAbility(can => can('read', 'foo', ['bar'], { kai: 'doe' }));
+      const ability = defineAbility((can) => can('read', 'foo', ['bar'], { kai: 'doe' }));
       const pm = createPermissionsManager({
         ability,
         model: 'foo',
@@ -81,7 +81,7 @@ describe('Permissions Manager', () => {
   });
 
   describe('get isAllowed', () => {
-    const ability = defineAbility(can => can('read', 'foo'));
+    const ability = defineAbility((can) => can('read', 'foo'));
 
     test('It should grants access', () => {
       const pm = createPermissionsManager({
@@ -112,7 +112,7 @@ describe('Permissions Manager', () => {
     };
 
     const attr = '__caslSubjectType__';
-    const ability = defineAbility(can => can('read', 'foo'));
+    const ability = defineAbility((can) => can('read', 'foo'));
     const pm = createPermissionsManager({
       ability,
       action: 'read',
@@ -143,7 +143,6 @@ describe('Permissions Manager', () => {
     global.strapi = {
       getModel() {
         return {
-          privateAttributes: [],
           attributes: {
             title: {
               type: 'text',
@@ -159,7 +158,7 @@ describe('Permissions Manager', () => {
       },
     };
 
-    const ability = defineAbility(can => {
+    const ability = defineAbility((can) => {
       can('read', 'article', ['title'], { title: 'foo' });
       can('edit', 'article', ['title'], { title: { $in: ['kai', 'doe'] } });
     });
@@ -195,7 +194,7 @@ describe('Permissions Manager', () => {
   });
 
   describe('addPermissionsQueryTo', () => {
-    const ability = defineAbility(can =>
+    const ability = defineAbility((can) =>
       can('read', 'article', ['title'], { $and: [{ title: 'foo' }] })
     );
     const pm = createPermissionsManager({

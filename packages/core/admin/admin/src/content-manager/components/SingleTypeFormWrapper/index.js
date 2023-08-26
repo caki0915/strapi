@@ -1,17 +1,22 @@
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
-import { useHistory } from 'react-router-dom';
-import get from 'lodash/get';
+import { memo, useCallback, useEffect, useRef, useState, useMemo } from 'react';
+
 import {
-  useTracking,
-  formatComponentData,
-  useQueryParams,
+  formatContentTypeData,
+  useAPIErrorHandler,
+  useFetchClient,
+  useGuidedTour,
   useNotification,
+  useQueryParams,
+  useTracking,
 } from '@strapi/helper-plugin';
-import { useSelector, useDispatch } from 'react-redux';
-import PropTypes from 'prop-types';
 import axios from 'axios';
-import { axiosInstance } from '../../../core/utils';
-import { createDefaultForm, getTrad, removePasswordFieldsFromData } from '../../utils';
+import get from 'lodash/get';
+import PropTypes from 'prop-types';
+import { useQueryClient } from 'react-query';
+import { useDispatch, useSelector } from 'react-redux';
+import { useHistory } from 'react-router-dom';
+
+import { buildValidGetParams } from '../../pages/ListView/utils';
 import {
   getData,
   getDataSucceeded,
@@ -22,30 +27,29 @@ import {
   submitSucceeded,
 } from '../../sharedReducers/crudReducer/actions';
 import selectCrudReducer from '../../sharedReducers/crudReducer/selectors';
-import { getRequestUrl } from './utils';
-import buildQueryString from '../../pages/ListView/utils/buildQueryString';
+import { createDefaultForm, getTrad, removePasswordFieldsFromData } from '../../utils';
 
 // This container is used to handle the CRUD
 const SingleTypeFormWrapper = ({ allLayoutData, children, slug }) => {
+  const queryClient = useQueryClient();
   const { trackUsage } = useTracking();
   const { push } = useHistory();
+  const { setCurrentStep } = useGuidedTour();
   const trackUsageRef = useRef(trackUsage);
   const [isCreatingEntry, setIsCreatingEntry] = useState(true);
   const [{ query, rawQuery }] = useQueryParams();
-  const searchToSend = buildQueryString(query);
+  const params = useMemo(() => buildValidGetParams(query), [query]);
   const toggleNotification = useNotification();
   const dispatch = useDispatch();
+  const { formatAPIError } = useAPIErrorHandler(getTrad);
+  const fetchClient = useFetchClient();
+  const { post, put, del } = fetchClient;
 
-  const {
-    componentsDataStructure,
-    contentTypeDataStructure,
-    data,
-    isLoading,
-    status,
-  } = useSelector(selectCrudReducer);
+  const { componentsDataStructure, contentTypeDataStructure, data, isLoading, status } =
+    useSelector(selectCrudReducer);
 
   const cleanReceivedData = useCallback(
-    data => {
+    (data) => {
       const cleaned = removePasswordFieldsFromData(
         data,
         allLayoutData.contentType,
@@ -53,7 +57,7 @@ const SingleTypeFormWrapper = ({ allLayoutData, children, slug }) => {
       );
 
       // This is needed in order to add a unique id for the repeatable components, in order to make the reorder easier
-      return formatComponentData(cleaned, allLayoutData.contentType, allLayoutData.components);
+      return formatContentTypeData(cleaned, allLayoutData.contentType, allLayoutData.components);
     },
     [allLayoutData]
   );
@@ -71,7 +75,7 @@ const SingleTypeFormWrapper = ({ allLayoutData, children, slug }) => {
         allLayoutData.components
       );
 
-      acc[current] = formatComponentData(
+      acc[current] = formatContentTypeData(
         defaultComponentForm,
         allLayoutData.components[current],
         allLayoutData.components
@@ -84,7 +88,7 @@ const SingleTypeFormWrapper = ({ allLayoutData, children, slug }) => {
       allLayoutData.contentType.attributes,
       allLayoutData.components
     );
-    const contentTypeDataStructureFormatted = formatComponentData(
+    const contentTypeDataStructureFormatted = formatContentTypeData(
       contentTypeDataStructure,
       allLayoutData.contentType,
       allLayoutData.components
@@ -98,14 +102,15 @@ const SingleTypeFormWrapper = ({ allLayoutData, children, slug }) => {
     const CancelToken = axios.CancelToken;
     const source = CancelToken.source();
 
-    const fetchData = async source => {
+    const fetchData = async (source) => {
       dispatch(getData());
 
       setIsCreatingEntry(true);
 
       try {
-        const { data } = await axiosInstance(getRequestUrl(`${slug}${searchToSend}`), {
+        const { data } = await fetchClient.get(`/content-manager/single-types/${slug}`, {
           cancelToken: source.token,
+          params,
         });
 
         dispatch(getDataSucceeded(cleanReceivedData(data)));
@@ -137,33 +142,23 @@ const SingleTypeFormWrapper = ({ allLayoutData, children, slug }) => {
     fetchData(source);
 
     return () => source.cancel('Operation canceled by the user.');
-  }, [cleanReceivedData, push, slug, dispatch, searchToSend, rawQuery, toggleNotification]);
+  }, [fetchClient, cleanReceivedData, push, slug, dispatch, params, rawQuery, toggleNotification]);
 
   const displayErrors = useCallback(
-    err => {
-      const errorPayload = err.response.payload;
-      console.error(errorPayload);
-
-      let errorMessage = get(errorPayload, ['message'], 'Bad Request');
-
-      // TODO handle errors correctly when back-end ready
-      if (Array.isArray(errorMessage)) {
-        errorMessage = get(errorMessage, ['0', 'messages', '0', 'id']);
-      }
-
-      if (typeof errorMessage === 'string') {
-        toggleNotification({ type: 'warning', message: errorMessage });
-      }
+    (err) => {
+      toggleNotification({ type: 'warning', message: formatAPIError(err) });
     },
-    [toggleNotification]
+    [toggleNotification, formatAPIError]
   );
 
   const onDelete = useCallback(
-    async trackerProperty => {
+    async (trackerProperty) => {
       try {
         trackUsageRef.current('willDeleteEntry', trackerProperty);
 
-        const { data } = await axiosInstance.delete(getRequestUrl(`${slug}${searchToSend}`));
+        const { data } = await del(`/content-manager/single-types/${slug}`, {
+          params,
+        });
 
         toggleNotification({
           type: 'success',
@@ -172,30 +167,29 @@ const SingleTypeFormWrapper = ({ allLayoutData, children, slug }) => {
 
         trackUsageRef.current('didDeleteEntry', trackerProperty);
 
+        setIsCreatingEntry(true);
+        dispatch(initForm(rawQuery, true));
+
         return Promise.resolve(data);
       } catch (err) {
         trackUsageRef.current('didNotDeleteEntry', { error: err, ...trackerProperty });
 
+        displayErrors(err);
+
         return Promise.reject(err);
       }
     },
-    [slug, toggleNotification, searchToSend]
+    [del, slug, params, toggleNotification, dispatch, rawQuery, displayErrors]
   );
-
-  const onDeleteSucceeded = useCallback(() => {
-    setIsCreatingEntry(true);
-
-    dispatch(initForm(rawQuery, true));
-  }, [dispatch, rawQuery]);
 
   const onPost = useCallback(
     async (body, trackerProperty) => {
-      const endPoint = getRequestUrl(`${slug}${rawQuery}`);
+      const endPoint = `/content-manager/single-types/${slug}`;
 
       try {
         dispatch(setStatus('submit-pending'));
 
-        const { data } = await axiosInstance.put(endPoint, body);
+        const { data } = await put(endPoint, body, { params: query });
 
         trackUsageRef.current('didCreateEntry', trackerProperty);
         toggleNotification({
@@ -203,28 +197,75 @@ const SingleTypeFormWrapper = ({ allLayoutData, children, slug }) => {
           message: { id: getTrad('success.record.save') },
         });
 
+        setCurrentStep('contentManager.success');
+
+        // TODO: need to find a better place, or a better abstraction
+        queryClient.invalidateQueries(['relation']);
+
         dispatch(submitSucceeded(cleanReceivedData(data)));
         setIsCreatingEntry(false);
 
         dispatch(setStatus('resolved'));
+
+        return Promise.resolve(data);
       } catch (err) {
         trackUsageRef.current('didNotCreateEntry', { error: err, trackerProperty });
 
         displayErrors(err);
 
         dispatch(setStatus('resolved'));
+
+        return Promise.reject(err);
       }
     },
-    [cleanReceivedData, displayErrors, slug, dispatch, rawQuery, toggleNotification]
+    [
+      put,
+      cleanReceivedData,
+      displayErrors,
+      slug,
+      dispatch,
+      query,
+      toggleNotification,
+      setCurrentStep,
+      queryClient,
+    ]
   );
+
+  const onDraftRelationCheck = useCallback(async () => {
+    try {
+      trackUsageRef.current('willCheckDraftRelations');
+
+      const endPoint = `/content-manager/single-types/${slug}/actions/countDraftRelations`;
+      dispatch(setStatus('draft-relation-check-pending'));
+
+      const numberOfDraftRelations = await fetchClient.get(endPoint);
+      trackUsageRef.current('didCheckDraftRelations');
+
+      dispatch(setStatus('resolved'));
+
+      return numberOfDraftRelations.data.data;
+    } catch (err) {
+      displayErrors(err);
+      dispatch(setStatus('resolved'));
+
+      return Promise.reject(err);
+    }
+  }, [fetchClient, displayErrors, slug, dispatch]);
+
   const onPublish = useCallback(async () => {
     try {
       trackUsageRef.current('willPublishEntry');
-      const endPoint = getRequestUrl(`${slug}/actions/publish${searchToSend}`);
+      const endPoint = `/content-manager/single-types/${slug}/actions/publish`;
 
       dispatch(setStatus('publish-pending'));
 
-      const { data } = await axiosInstance.post(endPoint);
+      const { data } = await post(
+        endPoint,
+        {},
+        {
+          params,
+        }
+      );
 
       trackUsageRef.current('didPublishEntry');
       toggleNotification({
@@ -235,23 +276,27 @@ const SingleTypeFormWrapper = ({ allLayoutData, children, slug }) => {
       dispatch(submitSucceeded(cleanReceivedData(data)));
 
       dispatch(setStatus('resolved'));
+
+      return Promise.resolve(data);
     } catch (err) {
       displayErrors(err);
 
       dispatch(setStatus('resolved'));
+
+      return Promise.reject(err);
     }
-  }, [cleanReceivedData, displayErrors, slug, searchToSend, dispatch, toggleNotification]);
+  }, [slug, dispatch, post, params, toggleNotification, cleanReceivedData, displayErrors]);
 
   const onPut = useCallback(
     async (body, trackerProperty) => {
-      const endPoint = getRequestUrl(`${slug}${rawQuery}`);
+      const endPoint = `/content-manager/single-types/${slug}`;
 
       try {
         trackUsageRef.current('willEditEntry', trackerProperty);
 
         dispatch(setStatus('submit-pending'));
 
-        const { data } = await axiosInstance.put(endPoint, body);
+        const { data } = await put(endPoint, body, { params: query });
 
         toggleNotification({
           type: 'success',
@@ -260,30 +305,43 @@ const SingleTypeFormWrapper = ({ allLayoutData, children, slug }) => {
 
         trackUsageRef.current('didEditEntry', { trackerProperty });
 
+        // TODO: need to find a better place, or a better abstraction
+        queryClient.invalidateQueries(['relation']);
+
         dispatch(submitSucceeded(cleanReceivedData(data)));
 
         dispatch(setStatus('resolved'));
+
+        return Promise.resolve(data);
       } catch (err) {
         displayErrors(err);
 
         trackUsageRef.current('didNotEditEntry', { error: err, trackerProperty });
 
         dispatch(setStatus('resolved'));
+
+        return Promise.reject(err);
       }
     },
-    [cleanReceivedData, displayErrors, slug, dispatch, rawQuery, toggleNotification]
+    [put, cleanReceivedData, displayErrors, slug, dispatch, query, toggleNotification, queryClient]
   );
 
   // The publish and unpublish method could be refactored but let's leave the duplication for now
   const onUnpublish = useCallback(async () => {
-    const endPoint = getRequestUrl(`${slug}/actions/unpublish${searchToSend}`);
+    const endPoint = `/content-manager/single-types/${slug}/actions/unpublish`;
 
     dispatch(setStatus('unpublish-pending'));
 
     try {
       trackUsageRef.current('willUnpublishEntry');
 
-      const { data } = await axiosInstance.post(endPoint);
+      const { data } = await post(
+        endPoint,
+        {},
+        {
+          params,
+        }
+      );
 
       trackUsageRef.current('didUnpublishEntry');
       toggleNotification({
@@ -298,7 +356,7 @@ const SingleTypeFormWrapper = ({ allLayoutData, children, slug }) => {
       dispatch(setStatus('resolved'));
       displayErrors(err);
     }
-  }, [cleanReceivedData, toggleNotification, displayErrors, slug, dispatch, searchToSend]);
+  }, [slug, dispatch, post, params, toggleNotification, cleanReceivedData, displayErrors]);
 
   return children({
     componentsDataStructure,
@@ -307,8 +365,8 @@ const SingleTypeFormWrapper = ({ allLayoutData, children, slug }) => {
     isCreatingEntry,
     isLoadingForData: isLoading,
     onDelete,
-    onDeleteSucceeded,
     onPost,
+    onDraftRelationCheck,
     onPublish,
     onPut,
     onUnpublish,

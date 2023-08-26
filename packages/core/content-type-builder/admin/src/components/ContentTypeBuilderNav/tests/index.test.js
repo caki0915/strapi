@@ -4,40 +4,39 @@
  *
  */
 
-import { Layout } from '@strapi/design-system';
+import React from 'react';
+
+import { Layout, lightTheme, ThemeProvider } from '@strapi/design-system';
 import { render } from '@testing-library/react';
 import { createMemoryHistory } from 'history';
-import React from 'react';
+import { IntlProvider } from 'react-intl';
 import { Router } from 'react-router-dom';
-import LanguageProvider from '../../../../../../admin/admin/src/components/LanguageProvider';
-import Theme from '../../../../../../admin/admin/src/components/Theme';
-import en from '../../../../../../admin/admin/src/translations/en.json';
+
 import ContentTypeBuilderNav from '../index';
+
 import mockData from './mockData';
 
 jest.mock('../useContentTypeBuilderMenu.js', () => {
   return jest.fn(() => ({
     menu: mockData,
     searchValue: '',
-    onSearchChange: () => {},
+    onSearchChange() {},
   }));
 });
 
 const makeApp = () => {
   const history = createMemoryHistory();
-  const messages = { en };
-  const localeNames = { en: 'English' };
 
   return (
-    <LanguageProvider messages={messages} localeNames={localeNames}>
-      <Theme>
+    <IntlProvider messages={{}} defaultLocale="en" textComponent="span" locale="en">
+      <ThemeProvider theme={lightTheme}>
         <Router history={history}>
           <Layout sideNav={<ContentTypeBuilderNav />}>
             <div />
           </Layout>
         </Router>
-      </Theme>
-    </LanguageProvider>
+      </ThemeProvider>
+    </IntlProvider>
   );
 };
 

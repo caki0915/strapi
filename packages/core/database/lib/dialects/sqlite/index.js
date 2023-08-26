@@ -5,13 +5,15 @@ const fse = require('fs-extra');
 
 const errors = require('../../errors');
 const { Dialect } = require('../dialect');
-const SqliteSchmeaInspector = require('./schema-inspector');
+const SqliteSchemaInspector = require('./schema-inspector');
+
+const UNSUPPORTED_OPERATORS = ['$jsonSupersetOf'];
 
 class SqliteDialect extends Dialect {
   constructor(db) {
     super(db);
 
-    this.schemaInspector = new SqliteSchmeaInspector(db);
+    this.schemaInspector = new SqliteSchemaInspector(db);
   }
 
   configure() {
@@ -22,6 +24,10 @@ class SqliteDialect extends Dialect {
     const dbDir = path.dirname(this.db.config.connection.connection.filename);
 
     fse.ensureDirSync(dbDir);
+  }
+
+  useReturning() {
+    return true;
   }
 
   async initialize() {
@@ -50,6 +56,10 @@ class SqliteDialect extends Dialect {
     }
   }
 
+  supportsOperator(operator) {
+    return !UNSUPPORTED_OPERATORS.includes(operator);
+  }
+
   async startSchemaUpdate() {
     await this.db.connection.raw(`pragma foreign_keys = off`);
   }
@@ -61,12 +71,16 @@ class SqliteDialect extends Dialect {
   transformErrors(error) {
     switch (error.errno) {
       case 19: {
-        throw new errors.NotNullConstraint(); // TODO: extract column name
+        throw new errors.NotNullError(); // TODO: extract column name
       }
       default: {
         super.transformErrors(error);
       }
     }
+  }
+
+  canAddIncrements() {
+    return false;
   }
 }
 

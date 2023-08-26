@@ -1,6 +1,6 @@
 {
   "name": "@strapi/admin-test-utils",
-  "version": "4.0.0",
+  "version": "4.12.7",
   "private": true,
   "description": "Test utilities for the Strapi administration panel",
   "license": "MIT",
@@ -16,20 +16,47 @@
       "url": "https://strapi.io"
     }
   ],
-  "main": "lib/index.js",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./dist/index.js"
+    },
+    "./after-env": {
+      "require": "./dist/after-env.js"
+    },
+    "./environment": {
+      "require": "./dist/environment.js"
+    },
+    "./file-mock": {
+      "require": "./dist/file-mock.js"
+    },
+    "./global-setup": {
+      "require": "./dist/global-setup.js"
+    }
+  },
   "dependencies": {
-    "@babel/polyfill": "7.12.1"
+    "@juggle/resize-observer": "3.4.0",
+    "@testing-library/jest-dom": "5.16.5",
+    "jest-styled-components": "7.1.1",
+    "whatwg-fetch": "3.6.2"
   },
   "devDependencies": {
-    "@testing-library/jest-dom": "5.14.1",
-    "enzyme": "3.9.0",
-    "enzyme-adapter-react-16": "1.15.6",
-    "jest-styled-components": "7.0.2"
+    "eslint-config-custom": "4.12.7",
+    "redux": "^4.2.1",
+    "tsconfig": "4.12.7"
+  },
+  "peerDependencies": {
+    "redux": "^4.2.1"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "run -T tsc",
+    "build:ts": "run -T tsc",
+    "watch": "run -T tsc -w --preserveWatchOutput",
+    "clean": "run -T rimraf ./dist",
+    "lint": "run -T eslint ."
   },
   "engines": {
-    "node": ">=12.x.x <=16.x.x"
+    "node": ">=16.0.0 <=20.x.x"
   }
 }

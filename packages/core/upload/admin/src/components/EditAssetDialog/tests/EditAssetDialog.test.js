@@ -1,13 +1,16 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { ThemeProvider, lightTheme } from '@strapi/design-system';
+
+import { lightTheme, ThemeProvider } from '@strapi/design-system';
+import { NotificationsProvider } from '@strapi/helper-plugin';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { IntlProvider } from 'react-intl';
 import { QueryClient, QueryClientProvider } from 'react-query';
-import { NotificationsProvider } from '@strapi/helper-plugin';
-import { EditAssetDialog } from '../index';
+
 import en from '../../../translations/en.json';
 import { downloadFile } from '../../../utils/downloadFile';
+import { EditAssetDialog } from '../index';
 
+jest.mock('../../../hooks/useFolderStructure');
 jest.mock('../../../utils/downloadFile');
 
 const messageForPlugin = Object.keys(en).reduce((acc, curr) => {
@@ -19,7 +22,7 @@ const messageForPlugin = Object.keys(en).reduce((acc, curr) => {
 const asset = {
   id: 8,
   name: 'Screenshot 2.png',
-  alternativeText: null,
+  alternativeText: '',
   caption: null,
   width: 1476,
   height: 780,
@@ -89,38 +92,39 @@ const queryClient = new QueryClient({
   },
 });
 
-const renderCompo = (
-  props = { canUpdate: true, canCopyLink: true, canDownload: true },
-  toggleNotification = jest.fn()
-) =>
+const renderCompo = (props = { canUpdate: true, canCopyLink: true, canDownload: true }) =>
   render(
     <QueryClientProvider client={queryClient}>
       <ThemeProvider theme={lightTheme}>
-        <NotificationsProvider toggleNotification={toggleNotification}>
-          <IntlProvider locale="en" messages={messageForPlugin} defaultLocale="en">
+        <IntlProvider locale="en" messages={messageForPlugin} defaultLocale="en">
+          <NotificationsProvider>
             <EditAssetDialog asset={asset} onClose={jest.fn()} {...props} />
-          </IntlProvider>
-        </NotificationsProvider>
+          </NotificationsProvider>
+        </IntlProvider>
       </ThemeProvider>
     </QueryClientProvider>,
-    { container: document.body }
+    { container: document.getElementById('app') }
   );
 
 describe('<EditAssetDialog />', () => {
   const RealNow = Date.now;
+  let confirmSpy;
 
   beforeAll(() => {
+    confirmSpy = jest.spyOn(window, 'confirm');
+    confirmSpy.mockImplementation(jest.fn(() => true));
     global.Date.now = jest.fn(() => new Date('2021-09-20').getTime());
   });
 
   afterAll(() => {
+    confirmSpy.mockRestore();
     global.Date.now = RealNow;
   });
 
   it('renders and matches the snapshot', () => {
-    const { container } = renderCompo();
+    renderCompo();
 
-    expect(container).toMatchSnapshot();
+    expect(document.body).toMatchSnapshot();
   });
 
   describe('metadata form', () => {
@@ -132,6 +136,17 @@ describe('<EditAssetDialog />', () => {
       expect(screen.getByLabelText('Caption')).toHaveValue('');
     });
 
+    it('open confirm box on close if data has changed', () => {
+      const { getByRole } = renderCompo();
+
+      fireEvent.change(getByRole('textbox', { name: /alternative text/i }), {
+        target: { value: 'Test' },
+      });
+      fireEvent.click(getByRole('button', { name: /cancel/i }));
+
+      expect(window.confirm).toBeCalled();
+    });
+
     it('disables all the actions and field when the user is not allowed to update', () => {
       renderCompo({ canUpdate: false, canCopyLink: false, canDownload: false });
 
@@ -141,14 +156,13 @@ describe('<EditAssetDialog />', () => {
       expect(screen.getByText('Finish').parentElement).toHaveAttribute('aria-disabled', 'true');
     });
 
-    it('shows an error and sends the focus back to the name when it s not filled', async () => {
+    it('shows an error on the FileName input when its not filled', async () => {
       renderCompo();
 
       fireEvent.change(screen.getByLabelText('File name'), { target: { value: '' } });
       fireEvent.click(screen.getByText('Finish'));
 
       await waitFor(() => expect(screen.getByText('name is a required field')).toBeInTheDocument());
-      expect(screen.getByLabelText('File name')).toHaveFocus();
     });
   });
 
@@ -168,30 +182,18 @@ describe('<EditAssetDialog />', () => {
       expect(screen.queryByLabelText('Delete')).not.toBeInTheDocument();
     });
 
-    it('copies the link and shows a notification when pressing "Copy link" and the user has permission to copy', () => {
-      const toggleNotificationSpy = jest.fn();
-      renderCompo(
-        { canUpdate: false, canCopyLink: true, canDownload: false },
-        toggleNotificationSpy
-      );
+    it('copies the link and shows a notification when pressing "Copy link" and the user has permission to copy', async () => {
+      renderCompo({ canUpdate: false, canCopyLink: true, canDownload: false });
 
       fireEvent.click(screen.getByLabelText('Copy link'));
 
-      expect(toggleNotificationSpy).toHaveBeenCalledWith({
-        message: {
-          defaultMessage: 'Link copied into the clipboard',
-          id: 'notification.link-copied',
-        },
-        type: 'success',
-      });
+      await waitFor(() =>
+        expect(screen.getByText('Link copied into the clipboard')).toBeInTheDocument()
+      );
     });
 
     it('hides the copy link button when the user is not allowed to see it', () => {
-      const toggleNotificationSpy = jest.fn();
-      renderCompo(
-        { canUpdate: false, canCopyLink: false, canDownload: false },
-        toggleNotificationSpy
-      );
+      renderCompo({ canUpdate: false, canCopyLink: false, canDownload: false });
 
       expect(screen.queryByLabelText('Copy link')).not.toBeInTheDocument();
     });
@@ -201,7 +203,7 @@ describe('<EditAssetDialog />', () => {
 
       fireEvent.click(screen.getByLabelText('Download'));
       expect(downloadFile).toHaveBeenCalledWith(
-        'http://localhost:1337/uploads/Screenshot_2_5d4a574d61.png?updated_at=2021-10-04T09:42:31.670Z',
+        'http://localhost:1337/uploads/Screenshot_2_5d4a574d61.png',
         'Screenshot 2.png'
       );
     });
@@ -213,23 +215,13 @@ describe('<EditAssetDialog />', () => {
     });
 
     it('shows the crop link when the user is allowed to update', () => {
-      const toggleNotificationSpy = jest.fn();
-
-      renderCompo(
-        { canUpdate: true, canCopyLink: false, canDownload: false },
-        toggleNotificationSpy
-      );
+      renderCompo({ canUpdate: true, canCopyLink: false, canDownload: false });
 
       expect(screen.getByLabelText('Crop')).toBeInTheDocument();
     });
 
     it('hides the crop link when the user is not allowed to update', () => {
-      const toggleNotificationSpy = jest.fn();
-
-      renderCompo(
-        { canUpdate: false, canCopyLink: false, canDownload: false },
-        toggleNotificationSpy
-      );
+      renderCompo({ canUpdate: false, canCopyLink: false, canDownload: false });
 
       expect(screen.queryByLabelText('Crop')).not.toBeInTheDocument();
     });
@@ -249,16 +241,16 @@ describe('<EditAssetDialog />', () => {
       const file = new File(['Replacement media'], 'test.png', { type: 'image/png' });
 
       const fileList = [file];
-      fileList.item = i => fileList[i];
+      fileList.item = (i) => fileList[i];
 
-      const { container } = renderCompo({
+      renderCompo({
         canUpdate: true,
         canCopyLink: false,
         canDownload: false,
       });
 
-      fireEvent.change(container.querySelector('[type="file"]'), { target: { files: fileList } });
-      const img = container.querySelector('img');
+      fireEvent.change(document.querySelector('[type="file"]'), { target: { files: fileList } });
+      const img = document.querySelector('img');
 
       expect(img).toHaveAttribute('src', 'http://localhost:4000/assets/test.png');
     });

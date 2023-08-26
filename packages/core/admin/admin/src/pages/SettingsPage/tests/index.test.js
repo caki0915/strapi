@@ -1,47 +1,56 @@
 import React from 'react';
-import { Router, Route } from 'react-router-dom';
-import { StrapiAppProvider, AppInfosContext } from '@strapi/helper-plugin';
-import { render, screen, waitFor } from '@testing-library/react';
+
+import { darkTheme, lightTheme } from '@strapi/design-system';
+import { AppInfosContext, StrapiAppProvider, TrackingProvider } from '@strapi/helper-plugin';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryHistory } from 'history';
-import Theme from '../../../components/Theme';
+import { Route, Router } from 'react-router-dom';
+
 import { SettingsPage } from '..';
+import Theme from '../../../components/Theme';
+import ThemeToggleProvider from '../../../components/ThemeToggleProvider';
 import { useSettingsMenu } from '../../../hooks';
 
 jest.mock('../../../hooks', () => ({
   useSettingsMenu: jest.fn(() => ({ isLoading: false, menu: [] })),
-  useAppInfos: jest.fn(() => ({ shouldUpdateStrapi: false })),
-}));
-
-jest.mock('@fortawesome/react-fontawesome', () => ({
-  FontAwesomeIcon: () => null,
+  useAppInfo: jest.fn(() => ({ shouldUpdateStrapi: false })),
+  useThemeToggle: jest.fn(() => ({ currentTheme: 'light', themes: { light: lightTheme } })),
 }));
 
 jest.mock('react-intl', () => ({
   FormattedMessage: ({ id }) => id,
   useIntl: () => ({ formatMessage: jest.fn(({ id }) => id) }),
 }));
-jest.mock('../pages/ApplicationInfosPage', () => () => <h1>App infos</h1>);
+jest.mock('../pages/ApplicationInfosPage', () => () => {
+  return <h1>App infos</h1>;
+});
+
+const appInfos = { shouldUpdateStrapi: false };
 
 const makeApp = (history, settings) => (
-  <Theme>
-    <AppInfosContext.Provider value={{ shouldUpdateStrapi: false }}>
-      <StrapiAppProvider
-        settings={settings}
-        plugins={{}}
-        getPlugin={jest.fn()}
-        runHookParallel={jest.fn()}
-        runHookWaterfall={jest.fn()}
-        runHookSeries={jest.fn()}
-        menu={[]}
-      >
-        <Router history={history}>
-          <Route path="/settings/:settingId" component={SettingsPage} />
-          <Route path="/settings" component={SettingsPage} />
-        </Router>
-      </StrapiAppProvider>
-    </AppInfosContext.Provider>
-  </Theme>
+  <ThemeToggleProvider themes={{ light: lightTheme, dark: darkTheme }}>
+    <TrackingProvider>
+      <Theme>
+        <AppInfosContext.Provider value={appInfos}>
+          <StrapiAppProvider
+            settings={settings}
+            plugins={{}}
+            getPlugin={jest.fn()}
+            runHookParallel={jest.fn()}
+            runHookWaterfall={jest.fn()}
+            runHookSeries={jest.fn()}
+            menu={[]}
+          >
+            <Router history={history}>
+              <Route path="/settings/:settingId" component={SettingsPage} />
+              <Route path="/settings" component={SettingsPage} />
+            </Router>
+          </StrapiAppProvider>
+        </AppInfosContext.Provider>
+      </Theme>
+    </TrackingProvider>
+  </ThemeToggleProvider>
 );
 
 describe('ADMIN | pages | SettingsPage', () => {
@@ -58,7 +67,7 @@ describe('ADMIN | pages | SettingsPage', () => {
       },
     });
     const route = '/settings/application-infos';
-    history.push(route);
+    act(() => history.push(route));
 
     const { container } = render(App);
 
@@ -96,6 +105,55 @@ describe('ADMIN | pages | SettingsPage', () => {
         padding-bottom: 16px;
       }
 
+      .c4 {
+        font-weight: 600;
+        font-size: 1.125rem;
+        line-height: 1.22;
+        color: #32324d;
+      }
+
+      .c3 {
+        -webkit-align-items: flex-start;
+        -webkit-box-align: flex-start;
+        -ms-flex-align: flex-start;
+        align-items: flex-start;
+        display: -webkit-box;
+        display: -webkit-flex;
+        display: -ms-flexbox;
+        display: flex;
+        -webkit-flex-direction: row;
+        -ms-flex-direction: row;
+        flex-direction: row;
+        -webkit-box-pack: justify;
+        -webkit-justify-content: space-between;
+        -ms-flex-pack: justify;
+        justify-content: space-between;
+      }
+
+      .c10 {
+        -webkit-align-items: stretch;
+        -webkit-box-align: stretch;
+        -ms-flex-align: stretch;
+        align-items: stretch;
+        display: -webkit-box;
+        display: -webkit-flex;
+        display: -ms-flexbox;
+        display: flex;
+        -webkit-flex-direction: column;
+        -ms-flex-direction: column;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .c7 {
+        height: 1px;
+        border: none;
+        -webkit-flex-shrink: 0;
+        -ms-flex-negative: 0;
+        flex-shrink: 0;
+        margin: 0;
+      }
+
       .c1 {
         width: 14.5rem;
         background: #f6f6f9;
@@ -108,66 +166,16 @@ describe('ADMIN | pages | SettingsPage', () => {
         z-index: 1;
       }
 
-      .c3 {
-        display: -webkit-box;
-        display: -webkit-flex;
-        display: -ms-flexbox;
-        display: flex;
-        -webkit-flex-direction: row;
-        -ms-flex-direction: row;
-        flex-direction: row;
-        -webkit-box-pack: justify;
-        -webkit-justify-content: space-between;
-        -ms-flex-pack: justify;
-        justify-content: space-between;
-        -webkit-align-items: flex-start;
-        -webkit-box-align: flex-start;
-        -ms-flex-align: flex-start;
-        align-items: flex-start;
-      }
-
-      .c4 {
-        color: #32324d;
-        font-weight: 600;
-        font-size: 1.125rem;
-        line-height: 1.22;
-      }
-
-      .c7 {
-        height: 1px;
-        border: none;
-        margin: 0;
-      }
-
       .c8 {
         width: 1.5rem;
         background-color: #dcdce4;
-      }
-
-      .c10 {
-        display: -webkit-box;
-        display: -webkit-flex;
-        display: -ms-flexbox;
-        display: flex;
-        -webkit-flex-direction: column;
-        -ms-flex-direction: column;
-        flex-direction: column;
-      }
-
-      .c10 > * {
-        margin-top: 0;
-        margin-bottom: 0;
-      }
-
-      .c10 > * + * {
-        margin-top: 8px;
       }
 
       <div
         class="c0"
       >
         <nav
-          aria-label="app.components.LeftMenuLinkContainer.settings"
+          aria-label="global.settings"
           class="c1"
         >
           <div
@@ -179,7 +187,7 @@ describe('ADMIN | pages | SettingsPage', () => {
               <h2
                 class="c4"
               >
-                app.components.LeftMenuLinkContainer.settings
+                global.settings
               </h2>
             </div>
             <div
@@ -193,7 +201,7 @@ describe('ADMIN | pages | SettingsPage', () => {
           <div
             class="c9"
           >
-            <ul
+            <ol
               class="c10"
             />
           </div>
@@ -222,7 +230,7 @@ describe('ADMIN | pages | SettingsPage', () => {
       },
     });
     const route = '/settings';
-    history.push(route);
+    act(() => history.push(route));
 
     render(App);
 
@@ -248,7 +256,9 @@ describe('ADMIN | pages | SettingsPage', () => {
               isDisplayed: true,
               permissions: [],
               to: '/settings/internationalization',
-              Component: () => ({ default: () => <div>i18n settings</div> }),
+              Component() {
+                return <div>i18n settings</div>;
+              },
             },
           ],
         },
@@ -262,7 +272,9 @@ describe('ADMIN | pages | SettingsPage', () => {
               isDisplayed: true,
               permissions: [],
               to: '/settings/email-settings',
-              Component: () => ({ default: () => <div>email settings</div> }),
+              Component() {
+                return <div>i18n settings</div>;
+              },
             },
           ],
         },
@@ -284,7 +296,9 @@ describe('ADMIN | pages | SettingsPage', () => {
             isDisplayed: true,
             permissions: [],
             to: '/settings/internationalization',
-            Component: () => ({ default: () => <div>i18n settings</div> }),
+            Component() {
+              return <div>i18n settings</div>;
+            },
           },
         ],
       },
@@ -298,25 +312,28 @@ describe('ADMIN | pages | SettingsPage', () => {
             isDisplayed: true,
             permissions: [],
             to: '/settings/email-settings',
-            Component: () => ({ default: () => <div>email settings</div> }),
+            Component() {
+              return <div>email settings</div>;
+            },
           },
         ],
       },
     });
     const route = '/settings/application-infos';
-    history.push(route);
+    const user = userEvent.setup();
+    act(() => history.push(route));
 
     render(App);
 
     expect(screen.getByText(/App infos/)).toBeInTheDocument();
 
-    userEvent.click(screen.getByText('i18n.plugin.name'));
+    await user.click(screen.getByText('i18n.plugin.name'));
 
     await waitFor(() => {
       expect(screen.getByText(/i18n settings/)).toBeInTheDocument();
     });
 
-    userEvent.click(screen.getByText('email'));
+    await user.click(screen.getByText('email'));
 
     await waitFor(() => {
       expect(screen.getByText(/email settings/)).toBeInTheDocument();

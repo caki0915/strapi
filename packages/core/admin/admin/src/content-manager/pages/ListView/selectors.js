@@ -1,10 +1,11 @@
 import { createSelector } from 'reselect';
+
 import { initialState } from './reducer';
 
 /**
  * Direct selector to the listView state domain
  */
-const listViewDomain = () => state => state['content-manager_listView'] || initialState;
+const listViewDomain = () => (state) => state['content-manager_listView'] || initialState;
 
 /**
  * Other specific selectors
@@ -15,14 +16,11 @@ const listViewDomain = () => state => state['content-manager_listView'] || initi
  */
 
 const makeSelectListView = () =>
-  createSelector(
-    listViewDomain(),
-    substate => {
-      return substate;
-    }
-  );
+  createSelector(listViewDomain(), (substate) => {
+    return substate;
+  });
 
-const selectDisplayedHeaders = state => {
+const selectDisplayedHeaders = (state) => {
   const { displayedHeaders } = state['content-manager_listView'];
 
   return displayedHeaders;

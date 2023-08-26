@@ -1,7 +1,9 @@
 'use strict';
 
 const strapiUtils = require('@strapi/utils');
-const { YupValidationError } = require('@strapi/utils/lib/errors');
+const {
+  errors: { YupValidationError },
+} = require('@strapi/utils');
 const validators = require('../validators');
 
 describe('BigInteger validator', () => {
@@ -25,14 +27,13 @@ describe('BigInteger validator', () => {
       kind: 'contentType',
       modelName: 'test-model',
       uid: 'test-uid',
-      privateAttributes: [],
       options: {},
       attributes: {
         attrBigIntegerUnique: { type: 'biginteger', unique: true },
       },
     };
 
-    test('it does not validates the unique constraint if the attribute is not set as unique', async () => {
+    test('it does not validate the unique constraint if the attribute is not set as unique', async () => {
       fakeFindOne.mockResolvedValueOnce(null);
 
       const validator = strapiUtils.validateYupSchema(
@@ -55,7 +56,7 @@ describe('BigInteger validator', () => {
       expect(fakeFindOne).not.toHaveBeenCalled();
     });
 
-    test('it does not validates the unique constraint if the attribute value is `null`', async () => {
+    test('it does not validate the unique constraint if the attribute value is `null`', async () => {
       fakeFindOne.mockResolvedValueOnce(null);
 
       const validator = strapiUtils.validateYupSchema(
@@ -198,6 +199,21 @@ describe('BigInteger validator', () => {
         select: ['id'],
         where: { $and: [{ attrBigIntegerUnique: 5 }, { $not: { id: 1 } }] },
       });
+    });
+  });
+
+  describe('min', () => {
+    test('it does not validate the min constraint if the attribute min is not a number', async () => {
+      const validator = strapiUtils.validateYupSchema(
+        validators.biginteger(
+          {
+            attr: { type: 'biginteger', minLength: '123' },
+          },
+          { isDraft: false }
+        )
+      );
+
+      expect(await validator(1)).toBe(1);
     });
   });
 });

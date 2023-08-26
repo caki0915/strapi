@@ -1,4 +1,5 @@
 import {
+  CLEAR_SET_MODIFIED_DATA_ONLY,
   GET_DATA,
   GET_DATA_SUCCEEDED,
   INIT_FORM,
@@ -14,7 +15,7 @@ export const getData = () => {
   };
 };
 
-export const getDataSucceeded = data => ({
+export const getDataSucceeded = (data) => ({
   type: GET_DATA_SUCCEEDED,
   data,
 });
@@ -33,12 +34,16 @@ export const setDataStructures = (componentsDataStructure, contentTypeDataStruct
   contentTypeDataStructure,
 });
 
-export const setStatus = status => ({
+export const setStatus = (status) => ({
   type: SET_STATUS,
   status,
 });
 
-export const submitSucceeded = data => ({
+export const submitSucceeded = (data) => ({
   type: SUBMIT_SUCCEEDED,
   data,
+});
+
+export const clearSetModifiedDataOnly = () => ({
+  type: CLEAR_SET_MODIFIED_DATA_ONLY,
 });

@@ -15,6 +15,7 @@ const defaultConfig = [
   'strapi::security',
   'strapi::cors',
   'strapi::poweredBy',
+  'strapi::session',
   'strapi::logger',
   'strapi::query',
   'strapi::body',
@@ -33,7 +34,7 @@ const requiredMiddlewares = [
 ];
 
 const middlewareConfigSchema = yup.array().of(
-  yup.lazy(value => {
+  yup.lazy((value) => {
     if (typeof value === 'string') {
       return yup.string().required();
     }
@@ -57,7 +58,7 @@ const middlewareConfigSchema = yup.array().of(
  * Register middlewares in router
  * @param {Strapi} strapi
  */
-const registerApplicationMiddlewares = async strapi => {
+const registerApplicationMiddlewares = async (strapi) => {
   const middlewareConfig = strapi.config.get('middlewares', defaultConfig);
 
   await validateMiddlewareConfig(middlewareConfig);
@@ -77,7 +78,7 @@ const registerApplicationMiddlewares = async strapi => {
  *
  * @param {MiddlewaresConfig} config
  */
-const validateMiddlewareConfig = async config => {
+const validateMiddlewareConfig = async (config) => {
   try {
     await middlewareConfigSchema.validate(config, { strict: true, abortEarly: false });
   } catch (error) {
@@ -91,9 +92,9 @@ const validateMiddlewareConfig = async config => {
  * Check if some required middlewares are missing in configure middlewares
  * @param {Middlewares} middlewares
  */
-const checkRequiredMiddlewares = middlewares => {
-  const missingMiddlewares = requiredMiddlewares.filter(name => {
-    return middlewares.findIndex(mdl => mdl.name === name) === -1;
+const checkRequiredMiddlewares = (middlewares) => {
+  const missingMiddlewares = requiredMiddlewares.filter((name) => {
+    return middlewares.findIndex((mdl) => mdl.name === name) === -1;
   });
 
   if (missingMiddlewares.length > 0) {
@@ -103,8 +104,6 @@ const checkRequiredMiddlewares = middlewares => {
       )}".`
     );
   }
-
-  return;
 };
 
 module.exports = registerApplicationMiddlewares;

@@ -1,5 +1,5 @@
-import reducer, { initialState } from '../reducer';
 import * as actions from '../constants';
+import reducer, { initialState } from '../reducer';
 
 describe('CTB | components | FormModal | reducer | actions', () => {
   describe(actions.ON_CHANGE, () => {
@@ -582,7 +582,7 @@ describe('CTB | components | FormModal | reducer | actions', () => {
         modifiedData: {
           type: 'media',
           multiple: true,
-          allowedTypes: ['images', 'files', 'videos'],
+          allowedTypes: ['images', 'files', 'videos', 'audios'],
         },
       };
 
